@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+
 	"github.com/dimassfeb-09/smart-library-be/entity"
 )
 
@@ -13,6 +14,7 @@ type BookRepositoryInterface interface {
 	DeleteBookByID(ctx context.Context, db *sql.DB, bookID int) error
 	UpdateBookByID(ctx context.Context, db *sql.DB, book *entity.Book) error
 	GetBookByCardID(ctx context.Context, db *sql.DB, cardID int) (*entity.Book, error)
+}
 
 type BookRepostitoryImpl struct{}
 
