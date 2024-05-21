@@ -9,11 +9,19 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+type BookControllerInterface interface {
+	GetBookByID(c *fiber.Ctx) error
+	GetAllBooks(c *fiber.Ctx) error
+	DeleteBookByID(c *fiber.Ctx) error
+	UpdateBookByID(c *fiber.Ctx) error
+	GetBookByCardID(c *fiber.Ctx) error
+}
+
 type BookController struct {
 	service services.BookServiceInterface
 }
 
-func NewBookController(service services.BookServiceInterface) *BookController {
+func NewBookController(service *services.BookService) *BookController {
 	return &BookController{
 		service: service,
 	}
@@ -40,7 +48,7 @@ func (c *BookController) GetBookByID(ctx *fiber.Ctx) error {
 }
 
 func (c *BookController) GetAllBooks(ctx *fiber.Ctx) error {
-	books, err := c.service.GetAllBooks(context.Background())
+	books, err := c.service.GetAllBooks(ctx.Context())
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

@@ -6,8 +6,8 @@ import (
 )
 
 func RegisterBookRoutes(app *fiber.App, controller *controllers.BookController) {
-	app.Get("/books", controller.GetBookByID)
 	app.Get("/books", controller.GetAllBooks)
+	app.Get("/books", controller.GetBookByID)
 	app.Delete("/books", controller.DeleteBookByID)
 	app.Put("/books", controller.UpdateBookByID)
 	app.Get("/books", controller.GetBookByCardID)

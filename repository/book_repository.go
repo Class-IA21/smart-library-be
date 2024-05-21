@@ -11,18 +11,18 @@ import (
 type BookRepositoryInterface interface {
 	GetBookByID(ctx context.Context, db *sql.DB, bookID int) (*entity.Book, error)
 	GetAllBooks(ctx context.Context, db *sql.DB) ([]*entity.Book, error)
-	DeleteBookByID(ctx context.Context, db *sql.DB, bookID int) error
-	UpdateBookByID(ctx context.Context, db *sql.DB, book *entity.Book) error
 	GetBookByCardID(ctx context.Context, db *sql.DB, cardID int) (*entity.Book, error)
+	DeleteBookByID(ctx context.Context, tx *sql.Tx, bookID int) error
+	UpdateBookByID(ctx context.Context, tx *sql.Tx, book *entity.Book) error
 }
 
-type BookRepostitoryImpl struct{}
+type BookRepostitory struct{}
 
-func NewBookRepositoryImpl() BookRepositoryInterface {
-	return &BookRepostitoryImpl{}
+func NewBookRepository() *BookRepostitory {
+	return &BookRepostitory{}
 }
 
-func (*BookRepostitoryImpl) GetBookByID(ctx context.Context, db *sql.DB, bookID int) (*entity.Book, error) {
+func (*BookRepostitory) GetBookByID(ctx context.Context, db *sql.DB, bookID int) (*entity.Book, error) {
 	result := db.QueryRowContext(ctx, "SELECT * FROM books WHERE id = ?", bookID)
 
 	var book entity.Book
@@ -39,6 +39,7 @@ func (*BookRepostitoryImpl) GetBookByID(ctx context.Context, db *sql.DB, bookID 
 		&book.Description,
 		&book.CreatedAt,
 		&book.UpdatedAt,
+		&book.CardID,
 	)
 	if err != nil {
 		return nil, errors.New("failed to fetch book")
@@ -46,7 +47,7 @@ func (*BookRepostitoryImpl) GetBookByID(ctx context.Context, db *sql.DB, bookID 
 	return &book, nil
 }
 
-func (*BookRepostitoryImpl) GetAllBooks(ctx context.Context, db *sql.DB) ([]*entity.Book, error) {
+func (*BookRepostitory) GetAllBooks(ctx context.Context, db *sql.DB) ([]*entity.Book, error) {
 	rows, err := db.QueryContext(ctx, "SELECT * FROM books")
 	if err != nil {
 		return nil, errors.New("failed to fetch books")
@@ -69,6 +70,7 @@ func (*BookRepostitoryImpl) GetAllBooks(ctx context.Context, db *sql.DB) ([]*ent
 			&book.Description,
 			&book.CreatedAt,
 			&book.UpdatedAt,
+			&book.CardID,
 		)
 		if err != nil {
 			return nil, errors.New("failed to scan books")
@@ -81,16 +83,16 @@ func (*BookRepostitoryImpl) GetAllBooks(ctx context.Context, db *sql.DB) ([]*ent
 	return books, nil
 }
 
-func (*BookRepostitoryImpl) DeleteBookByID(ctx context.Context, db *sql.DB, bookID int) error {
-	_, err := db.ExecContext(ctx, "DELETE FROM books WHERE id = ?", bookID)
+func (*BookRepostitory) DeleteBookByID(ctx context.Context, tx *sql.Tx, bookID int) error {
+	_, err := tx.ExecContext(ctx, "DELETE FROM books WHERE id = ?", bookID)
 	if err != nil {
 		return errors.New("failed to delete book")
 	}
 	return nil
 }
 
-func (*BookRepostitoryImpl) UpdateBookByID(ctx context.Context, db *sql.DB, book *entity.Book) error {
-	_, err := db.ExecContext(ctx, "UPDATE books SET title=?, author=?, publisher=?, published_date=?, isbn=?, pages=?, language=?, genre=?, description=?, created_at=?, updated_at=? WHERE id=?",
+func (*BookRepostitory) UpdateBookByID(ctx context.Context, tx *sql.Tx, book *entity.Book) error {
+	_, err := tx.ExecContext(ctx, "UPDATE books SET title=?, author=?, publisher=?, published_date=?, isbn=?, pages=?, language=?, genre=?, description=?, created_at=?, updated_at=?, card_id=? WHERE id=?",
 		book.Title,
 		book.Author,
 		book.Publisher,
@@ -102,6 +104,7 @@ func (*BookRepostitoryImpl) UpdateBookByID(ctx context.Context, db *sql.DB, book
 		book.Description,
 		book.CreatedAt,
 		book.UpdatedAt,
+		book.CardID,
 		book.ID,
 	)
 	if err != nil {
@@ -110,7 +113,7 @@ func (*BookRepostitoryImpl) UpdateBookByID(ctx context.Context, db *sql.DB, book
 	return nil
 }
 
-func (*BookRepostitoryImpl) GetBookByCardID(ctx context.Context, db *sql.DB, cardID int) (*entity.Book, error) {
+func (*BookRepostitory) GetBookByCardID(ctx context.Context, db *sql.DB, cardID int) (*entity.Book, error) {
 	result := db.QueryRowContext(ctx, "SELECT * FROM books WHERE card_id = ?", cardID)
 
 	var book entity.Book
@@ -127,6 +130,7 @@ func (*BookRepostitoryImpl) GetBookByCardID(ctx context.Context, db *sql.DB, car
 		&book.Description,
 		&book.CreatedAt,
 		&book.UpdatedAt,
+		&book.CardID,
 	)
 	if err != nil {
 		return nil, errors.New("failed to fetch book")

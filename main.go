@@ -12,15 +12,20 @@ import (
 )
 
 func main() {
-	database, err := db.Connection()
-	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
-	}
-	bookRepository := repository.NewBookRepositoryImpl()
+	database, _ := db.Connection()
+
+	bookRepository := repository.NewBookRepository()
 	bookService := services.NewBookService(bookRepository, database)
 	bookController := controllers.NewBookController(bookService)
 
+	studentRepository := repository.NewStudentRepository()
+
+	cardRepository := repository.NewCardRepository()
+	cardService := services.NewCardServices(database, bookRepository, cardRepository, studentRepository)
+	cardController := controllers.NewCardController(cardService)
+
 	app := fiber.New()
 	router.RegisterBookRoutes(app, bookController)
+	router.RegisterCardRoutes(app, cardController)
 	log.Fatal(app.Listen(":3000"))
 }

@@ -19,7 +19,8 @@ func Connection() (*sql.DB, error) {
 	}
 
 	if err := db.Ping(); err != nil {
-		return nil, err
+
+		log.Fatal(err)
 	}
 
 	return db, nil
