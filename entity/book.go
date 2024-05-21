@@ -13,4 +13,5 @@ type Book struct {
 	Description   string `json:"description"`
 	CreatedAt     string `json:"created_at"`
 	UpdatedAt     string `json:"updated_at"`
+	CardID        int    `json:"card_id"`
 }
