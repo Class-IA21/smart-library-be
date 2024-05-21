@@ -45,12 +45,9 @@ func (c *CardController) GetCardByID(ctx *fiber.Ctx) error {
 }
 
 func (c *CardController) GetCardTypeByUID(ctx *fiber.Ctx) error {
-	id, err := strconv.Atoi(ctx.Query("uid"))
-	if err != nil || id <= 0 {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid book ID"})
-	}
+	uid := ctx.Query("uid")
 
-	book, cardType, err := c.service.GetCardTypeByUID(context.Background(), id)
+	book, cardType, err := c.service.GetCardTypeByUID(context.Background(), uid)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

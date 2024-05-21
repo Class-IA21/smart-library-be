@@ -9,8 +9,8 @@ import (
 )
 
 type CardServiceInterface interface {
-	GetCardTypeByUID(ctx context.Context, uid int) (data any, cardType string, err error)
-	GetCardByUID(ctx context.Context, uid int) (*entity.Card, error)
+	GetCardTypeByUID(ctx context.Context, uid string) (data any, cardType string, err error)
+	GetCardByUID(ctx context.Context, uid string) (*entity.Card, error)
 	GetCardByID(ctx context.Context, id int) (*entity.Card, error)
 }
 
@@ -30,7 +30,7 @@ func NewCardServices(db *sql.DB, bookRepository *repository.BookRepostitory, car
 	}
 }
 
-func (s *CardServices) GetCardTypeByUID(ctx context.Context, uid int) (data any, cardType string, err error) {
+func (s *CardServices) GetCardTypeByUID(ctx context.Context, uid string) (data any, cardType string, err error) {
 	result, err := s.CardRepository.GetCardByUID(ctx, s.db, uid)
 	if err != nil {
 		return nil, "", err
@@ -54,7 +54,7 @@ func (s *CardServices) GetCardTypeByUID(ctx context.Context, uid int) (data any,
 	}
 }
 
-func (s *CardServices) GetCardByUID(ctx context.Context, uid int) (*entity.Card, error) {
+func (s *CardServices) GetCardByUID(ctx context.Context, uid string) (*entity.Card, error) {
 	result, err := s.CardRepository.GetCardByUID(ctx, s.db, uid)
 	if err != nil {
 		return nil, err
