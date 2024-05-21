@@ -22,17 +22,17 @@ func NewCardRepository() *CardRepository {
 func (r *CardRepository) GetCardByID(ctx context.Context, db *sql.DB, id int) (*entity.Card, error) {
 	row := db.QueryRowContext(ctx, "SELECT id, uid, type FROM card_rfid WHERE id = ?", id)
 
-	var rfid *entity.Card
+	var rfid entity.Card
 	err := row.Scan(&rfid.ID, &rfid.UID, &rfid.Type)
 	if err != nil {
 		return nil, err
 	}
 
-	return rfid, nil
+	return &rfid, nil
 }
 
-func (r *CardRepository) GetCardByUID(ctx context.Context, db *sql.DB, id int) (*entity.Card, error) {
-	row := db.QueryRowContext(ctx, "SELECT id, uid, type FROM card_rfid WHERE uid = ?", id)
+func (r *CardRepository) GetCardByUID(ctx context.Context, db *sql.DB, uid string) (*entity.Card, error) {
+	row := db.QueryRowContext(ctx, "SELECT * FROM card_rfid WHERE uid = ?", uid)
 
 	var rfid entity.Card
 	err := row.Scan(&rfid.ID, &rfid.UID, &rfid.Type)
