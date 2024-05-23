@@ -67,19 +67,20 @@ func (c *CardController) GetCardByID(ctx *fiber.Ctx) error {
 }
 
 func (c *CardController) GetCardTypeByUID(ctx *fiber.Ctx) error {
-	uid := ctx.Params("uid")
+	uid := ctx.Query("uid")
 
-	card, cardType, errorResponse := c.service.GetCardTypeByUID(ctx.Context(), uid)
+	id, cardType, errorResponse := c.service.GetCardTypeByUID(ctx.Context(), uid)
 	if errorResponse != nil {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
+	keyDataId := cardType + "_id"
 	response := entity.ResponseWebWithData{
 		Error:   false,
 		Message: "OK",
-		Data: map[string]interface{}{
+		Data: fiber.Map{
+			keyDataId:   id,
 			"card_type": cardType,
-			"value":     card,
 		},
 	}
 
