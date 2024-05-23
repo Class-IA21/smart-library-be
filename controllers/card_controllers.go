@@ -1,15 +1,17 @@
 package controllers
 
 import (
-	"context"
+	"net/http"
 	"strconv"
 
 	"github.com/dimassfeb-09/smart-library-be/entity"
+	"github.com/dimassfeb-09/smart-library-be/helper"
 	"github.com/dimassfeb-09/smart-library-be/services"
 	"github.com/gofiber/fiber/v2"
 )
 
 type CardControllerInterface interface {
+	GetCards(c *fiber.Ctx) error
 	GetCardByID(c *fiber.Ctx) error
 	GetCardTypeByUID(ctx *fiber.Ctx) error
 }
@@ -24,40 +26,60 @@ func NewCardController(service *services.CardServices) *CardController {
 	}
 }
 
-func (c *CardController) GetCardByID(ctx *fiber.Ctx) error {
-	id, err := strconv.Atoi(ctx.Query("id"))
-	if err != nil || id <= 0 {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid book ID"})
+func (c *CardController) GetCards(ctx *fiber.Ctx) error {
+	page, _ := strconv.Atoi(ctx.Query("page"))
+	pageSize, _ := strconv.Atoi(ctx.Query("pageSize"))
+
+	cards, errorResponse := c.service.GetCards(ctx.Context(), page, pageSize)
+	if errorResponse != nil {
+		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
-	book, err := c.service.GetCardByID(context.Background(), id)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	response := entity.ResponseWeb{
+	response := entity.ResponseWebWithData{
 		Error:   false,
 		Message: "OK",
-		Data:    book,
+		Data:    cards,
+	}
+
+	return ctx.JSON(response)
+
+}
+
+func (c *CardController) GetCardByID(ctx *fiber.Ctx) error {
+	id, err := strconv.Atoi(ctx.Params("id"))
+	if err != nil || id <= 0 {
+		return ctx.Status(fiber.StatusBadRequest).
+			JSON(helper.ErrorResponse(http.StatusBadRequest, "invalid card id"))
+	}
+
+	card, errorResponse := c.service.GetCardByID(ctx.Context(), id)
+	if errorResponse != nil {
+		return ctx.Status(errorResponse.Code).JSON(errorResponse)
+	}
+
+	response := entity.ResponseWebWithData{
+		Error:   false,
+		Message: "OK",
+		Data:    card,
 	}
 
 	return ctx.JSON(response)
 }
 
 func (c *CardController) GetCardTypeByUID(ctx *fiber.Ctx) error {
-	uid := ctx.Query("uid")
+	uid := ctx.Params("uid")
 
-	book, cardType, err := c.service.GetCardTypeByUID(context.Background(), uid)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	card, cardType, errorResponse := c.service.GetCardTypeByUID(ctx.Context(), uid)
+	if errorResponse != nil {
+		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
-	response := entity.ResponseWeb{
+	response := entity.ResponseWebWithData{
 		Error:   false,
 		Message: "OK",
 		Data: map[string]interface{}{
-			"type":  cardType,
-			"value": book,
+			"card_type": cardType,
+			"value":     card,
 		},
 	}
 

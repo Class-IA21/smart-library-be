@@ -9,6 +9,8 @@ import (
 	"github.com/dimassfeb-09/smart-library-be/router"
 	"github.com/dimassfeb-09/smart-library-be/services"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
 )
 
 func main() {
@@ -25,6 +27,13 @@ func main() {
 	cardController := controllers.NewCardController(cardService)
 
 	app := fiber.New()
+
+	app.Use(logger.New())
+	app.Use(requestid.New())
+	app.Use(logger.New(logger.Config{
+		Format: "PID ${pid} | [${ip}]:${port} ${status} - ${method} ${path}\n",
+	}))
+
 	router.RegisterBookRoutes(app, bookController)
 	router.RegisterCardRoutes(app, cardController)
 	log.Fatal(app.Listen(":3000"))
