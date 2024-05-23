@@ -3,58 +3,65 @@ package services
 import (
 	"context"
 	"database/sql"
-	"errors"
+	"net/http"
+
 	"github.com/dimassfeb-09/smart-library-be/entity"
+	"github.com/dimassfeb-09/smart-library-be/helper"
 	"github.com/dimassfeb-09/smart-library-be/repository"
 )
 
 type CardServiceInterface interface {
-	GetCardTypeByUID(ctx context.Context, uid string) (data any, cardType string, err error)
-	GetCardByUID(ctx context.Context, uid string) (*entity.Card, error)
-	GetCardByID(ctx context.Context, id int) (*entity.Card, error)
+	GetCards(ctx context.Context, page, pageSize int) ([]*entity.Card, *entity.ErrorResponse)
+	GetCardTypeByUID(ctx context.Context, uid string) (id int, cardType string, err *entity.ErrorResponse)
+	GetCardByUID(ctx context.Context, uid string) (*entity.Card, *entity.ErrorResponse)
+	GetCardByID(ctx context.Context, id int) (*entity.Card, *entity.ErrorResponse)
 }
 
 type CardServices struct {
 	db *sql.DB
-	*repository.BookRepostitory
+	*repository.BookRepository
 	*repository.CardRepository
 	*repository.StudentRepository
 }
 
-func NewCardServices(db *sql.DB, bookRepository *repository.BookRepostitory, cardRepository *repository.CardRepository, studentRepository *repository.StudentRepository) *CardServices {
+func NewCardServices(db *sql.DB, bookRepository *repository.BookRepository, cardRepository *repository.CardRepository, studentRepository *repository.StudentRepository) *CardServices {
 	return &CardServices{
 		db:                db,
-		BookRepostitory:   bookRepository,
+		BookRepository:    bookRepository,
 		CardRepository:    cardRepository,
 		StudentRepository: studentRepository,
 	}
 }
 
-func (s *CardServices) GetCardTypeByUID(ctx context.Context, uid string) (data any, cardType string, err error) {
+func (s *CardServices) GetCards(ctx context.Context, page, pageSize int) ([]*entity.Card, *entity.ErrorResponse) {
+	return s.CardRepository.GetCards(ctx, s.db, page, pageSize)
+}
+
+func (s *CardServices) GetCardTypeByUID(ctx context.Context, uid string) (id int, cardType string, err *entity.ErrorResponse) {
 	result, err := s.CardRepository.GetCardByUID(ctx, s.db, uid)
 	if err != nil {
-		return nil, "", err
+		return 0, "", err
 	}
 
 	switch result.Type {
 	case "student":
 		result, err := s.StudentRepository.GetStudentByCardID(ctx, s.db, result.ID)
 		if err != nil {
-			return nil, "", err
+			return 0, "", err
 		}
-		return result, "student", nil
+		return result.ID, "student", nil
 	case "book":
-		result, err := s.BookRepostitory.GetBookByCardID(ctx, s.db, result.ID)
+		result, err := s.BookRepository.GetBookByCardID(ctx, s.db, result.ID)
 		if err != nil {
-			return nil, "", err
+			return 0, "", err
 		}
-		return result, "book", nil
+		return result.ID, "book", nil
 	default:
-		return nil, "", errors.New("rfid not registered")
+		return 0, "", helper.ErrorResponse(http.StatusNotFound, "rfid not registered")
 	}
 }
 
-func (s *CardServices) GetCardByUID(ctx context.Context, uid string) (*entity.Card, error) {
+func (s *CardServices) GetCardByUID(ctx context.Context, uid string) (*entity.Card, *entity.ErrorResponse) {
 	result, err := s.CardRepository.GetCardByUID(ctx, s.db, uid)
 	if err != nil {
 		return nil, err
@@ -63,7 +70,7 @@ func (s *CardServices) GetCardByUID(ctx context.Context, uid string) (*entity.Ca
 	return result, nil
 }
 
-func (s *CardServices) GetCardByID(ctx context.Context, id int) (*entity.Card, error) {
+func (s *CardServices) GetCardByID(ctx context.Context, id int) (*entity.Card, *entity.ErrorResponse) {
 	result, err := s.CardRepository.GetCardByID(ctx, s.db, id)
 	if err != nil {
 		return nil, err
