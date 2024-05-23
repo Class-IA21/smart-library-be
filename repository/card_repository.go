@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/dimassfeb-09/smart-library-be/entity"
 	"github.com/dimassfeb-09/smart-library-be/helper"
@@ -15,6 +16,7 @@ type CardRepositoryInterface interface {
 	GetCardByID(ctx context.Context, db *sql.DB, id int) (*entity.Card, *entity.ErrorResponse)
 	GetCardByUID(ctx context.Context, db *sql.DB, uid int) (*entity.Card, *entity.ErrorResponse)
 	InsertCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse
+	UpdateCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse
 	DeleteCard(ctx context.Context, db *sql.DB, id int) *entity.ErrorResponse
 }
 
@@ -83,9 +85,19 @@ func (r *CardRepository) GetCardByUID(ctx context.Context, db *sql.DB, uid strin
 }
 
 func (r *CardRepository) InsertCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse {
-	_, err := db.ExecContext(ctx, "INSERT INTO card_rfid VALUES (?, ?, ?)", rfid.ID, rfid.UID, rfid.Type)
+	_, err := db.ExecContext(ctx, "INSERT INTO card_rfid (uid, type) VALUES (?, ?)", rfid.UID, rfid.Type)
 	if err != nil {
+		fmt.Println(err)
 		return helper.ErrorResponse(http.StatusInternalServerError, "failed to insert card")
+	}
+
+	return nil
+}
+
+func (r *CardRepository) UpdateCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse {
+	_, err := db.ExecContext(ctx, "UPDATE card_rfid SET uid = ?, type = ? WHERE id = ?", rfid.UID, rfid.Type, rfid.ID)
+	if err != nil {
+		return helper.ErrorResponse(http.StatusInternalServerError, "failed to update card")
 	}
 
 	return nil
@@ -94,7 +106,11 @@ func (r *CardRepository) InsertCard(ctx context.Context, db *sql.DB, rfid *entit
 func (r *CardRepository) DeleteCard(ctx context.Context, db *sql.DB, id int) *entity.ErrorResponse {
 	_, err := db.ExecContext(ctx, "DELETE FROM card_rfid WHERE id = ?", id)
 	if err != nil {
-		return helper.ErrorResponse(http.StatusInternalServerError, "failed to delete card")
+		var statusCode int
+		if strings.Contains(err.Error(), "foreign key constraint") {
+			statusCode = http.StatusConflict
+		}
+		return helper.ErrorResponse(statusCode, "failed to delete card")
 	}
 
 	return nil

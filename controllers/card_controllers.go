@@ -14,10 +14,13 @@ type CardControllerInterface interface {
 	GetCards(c *fiber.Ctx) error
 	GetCardByID(c *fiber.Ctx) error
 	GetCardTypeByUID(ctx *fiber.Ctx) error
+	InsertCard(ctx *fiber.Ctx) error
+	UpdateCard(ctx *fiber.Ctx) error
+	DeleteCard(ctx *fiber.Ctx) error
 }
 
 type CardController struct {
-	service services.CardServiceInterface
+	service *services.CardServices
 }
 
 func NewCardController(service *services.CardServices) *CardController {
@@ -35,12 +38,7 @@ func (c *CardController) GetCards(ctx *fiber.Ctx) error {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
-	response := entity.ResponseWebWithData{
-		Error:   false,
-		Message: "OK",
-		Data:    cards,
-	}
-
+	response := helper.SuccessResponseWithData(http.StatusOK, "OK", cards)
 	return ctx.JSON(response)
 
 }
@@ -48,8 +46,8 @@ func (c *CardController) GetCards(ctx *fiber.Ctx) error {
 func (c *CardController) GetCardByID(ctx *fiber.Ctx) error {
 	id, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil || id <= 0 {
-		return ctx.Status(fiber.StatusBadRequest).
-			JSON(helper.ErrorResponse(http.StatusBadRequest, "invalid card id"))
+		response := helper.ErrorResponse(http.StatusBadRequest, "invalid card id")
+		return ctx.Status(http.StatusBadRequest).JSON(response)
 	}
 
 	card, errorResponse := c.service.GetCardByID(ctx.Context(), id)
@@ -57,12 +55,7 @@ func (c *CardController) GetCardByID(ctx *fiber.Ctx) error {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
-	response := entity.ResponseWebWithData{
-		Error:   false,
-		Message: "OK",
-		Data:    card,
-	}
-
+	response := helper.SuccessResponseWithData(http.StatusOK, "OK", card)
 	return ctx.JSON(response)
 }
 
@@ -74,15 +67,73 @@ func (c *CardController) GetCardTypeByUID(ctx *fiber.Ctx) error {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
-	keyDataId := cardType + "_id"
-	response := entity.ResponseWebWithData{
-		Error:   false,
-		Message: "OK",
-		Data: fiber.Map{
-			keyDataId:   id,
-			"card_type": cardType,
-		},
+	response := helper.SuccessResponseWithData(http.StatusOK, "OK", fiber.Map{
+		"id":        id,
+		"card_type": cardType,
+	})
+	return ctx.JSON(response)
+}
+
+func (c *CardController) InsertCard(ctx *fiber.Ctx) error {
+	var card entity.Card
+
+	if err := ctx.BodyParser(&card); err != nil {
+		response := helper.ErrorResponse(fiber.StatusBadRequest, "Invalid request")
+		return ctx.Status(fiber.StatusBadRequest).JSON(response)
 	}
 
+	if errorResponse := helper.ValidateStruct(&card); errorResponse != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
+	}
+
+	if errorResponse := c.service.InsertCard(ctx.Context(), &card); errorResponse != nil {
+		return ctx.Status(errorResponse.Code).JSON(errorResponse)
+	}
+
+	response := helper.SuccessResponseWithoutData(http.StatusCreated, "Card created successfully")
+	return ctx.Status(http.StatusCreated).JSON(response)
+}
+
+func (c *CardController) UpdateCard(ctx *fiber.Ctx) error {
+	var card entity.Card
+
+	id, err := strconv.Atoi(ctx.Params("id"))
+	if err != nil || id <= 0 {
+		response := helper.ErrorResponse(fiber.StatusBadRequest, "invalid card id")
+		return ctx.Status(fiber.StatusBadRequest).JSON(response)
+	}
+	card.ID = id
+
+	if err := ctx.BodyParser(&card); err != nil {
+		response := helper.ErrorResponse(fiber.StatusBadRequest, "request invalid")
+		return ctx.Status(fiber.StatusBadRequest).JSON(response)
+	}
+
+	if errorResponse := helper.ValidateStruct(&card); errorResponse != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
+	}
+
+	errorResponse := c.service.UpdateCard(ctx.Context(), id, &card)
+	if errorResponse != nil {
+		return ctx.Status(errorResponse.Code).JSON(errorResponse)
+	}
+
+	response := helper.SuccessResponseWithoutData(http.StatusOK, "Card updated successfully")
+	return ctx.JSON(response)
+}
+
+func (c *CardController) DeleteCard(ctx *fiber.Ctx) error {
+	id, err := strconv.Atoi(ctx.Params("id"))
+	if err != nil || id <= 0 {
+		response := helper.ErrorResponse(fiber.StatusBadRequest, "invalid card id")
+		return ctx.Status(fiber.StatusBadRequest).JSON(response)
+	}
+
+	errorResponse := c.service.DeleteCard(ctx.Context(), id)
+	if errorResponse != nil {
+		return ctx.Status(errorResponse.Code).JSON(errorResponse)
+	}
+
+	response := helper.SuccessResponseWithoutData(http.StatusOK, "Card deleted successfully")
 	return ctx.JSON(response)
 }

@@ -2,16 +2,16 @@ package entity
 
 type Book struct {
 	ID            int    `json:"id"`
-	Title         string `json:"title"`
-	Author        string `json:"author"`
-	Publisher     string `json:"publisher"`
-	PublishedDate string `json:"published_date"`
-	ISBN          string `json:"isbn"`
-	Pages         int    `json:"pages"`
-	Language      string `json:"language"`
-	Genre         string `json:"genre"`
-	Description   string `json:"description"`
+	Title         string `json:"title" validate:"required"`
+	Author        string `json:"author" validate:"required"`
+	Publisher     string `json:"publisher" validate:"required"`
+	PublishedDate string `json:"published_date" validate:"required"`
+	ISBN          string `json:"isbn" validate:"required"`
+	Pages         int    `json:"pages" validate:"required,number"`
+	Language      string `json:"language" validate:"required"`
+	Genre         string `json:"genre" validate:"required"`
+	Description   string `json:"description" validate:"required"`
 	CreatedAt     string `json:"created_at"`
 	UpdatedAt     string `json:"updated_at"`
-	CardID        int    `json:"card_id"`
+	CardID        int    `json:"card_id" validate:"required,number"`
 }

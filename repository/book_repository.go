@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/dimassfeb-09/smart-library-be/entity"
 	"github.com/dimassfeb-09/smart-library-be/helper"
@@ -16,6 +17,7 @@ type BookRepositoryInterface interface {
 	GetBookByCardID(ctx context.Context, db *sql.DB, cardID int) (*entity.Book, *entity.ErrorResponse)
 	DeleteBookByID(ctx context.Context, tx *sql.Tx, bookID int) *entity.ErrorResponse
 	UpdateBookByID(ctx context.Context, tx *sql.Tx, book *entity.Book) *entity.ErrorResponse
+	InsertBook(ctx context.Context, tx *sql.Tx, book *entity.Book) *entity.ErrorResponse
 }
 
 type BookRepository struct{}
@@ -107,7 +109,7 @@ func (*BookRepository) DeleteBookByID(ctx context.Context, tx *sql.Tx, bookID in
 }
 
 func (*BookRepository) UpdateBookByID(ctx context.Context, tx *sql.Tx, book *entity.Book) *entity.ErrorResponse {
-	_, err := tx.ExecContext(ctx, "UPDATE books SET title=?, author=?, publisher=?, published_date=?, isbn=?, pages=?, language=?, genre=?, description=?, created_at=?, updated_at=?, card_id=? WHERE id=?",
+	_, err := tx.ExecContext(ctx, "UPDATE books SET title=?, author=?, publisher=?, published_date=?, isbn=?, pages=?, language=?, genre=?, description=?, card_id=? WHERE id=?",
 		book.Title,
 		book.Author,
 		book.Publisher,
@@ -117,8 +119,6 @@ func (*BookRepository) UpdateBookByID(ctx context.Context, tx *sql.Tx, book *ent
 		book.Language,
 		book.Genre,
 		book.Description,
-		book.CreatedAt,
-		book.UpdatedAt,
 		book.CardID,
 		book.ID,
 	)
@@ -151,7 +151,34 @@ func (*BookRepository) GetBookByCardID(ctx context.Context, db *sql.DB, cardID i
 		if err == sql.ErrNoRows {
 			return nil, helper.ErrorResponse(http.StatusNotFound, "data not found")
 		}
+		if isError := strings.Contains(err.Error(), "a foreign key constraint fails"); isError {
+			return nil, helper.ErrorResponse(http.StatusUnprocessableEntity, "failed to update book, data card_id not valid.")
+		}
+
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan book")
 	}
 	return &book, nil
+}
+
+func (*BookRepository) InsertBook(ctx context.Context, tx *sql.Tx, book *entity.Book) *entity.ErrorResponse {
+
+	_, err := tx.ExecContext(ctx, "INSERT INTO books (title, author, publisher, published_date, isbn, pages, language, genre, description, card_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		book.Title,
+		book.Author,
+		book.Publisher,
+		book.PublishedDate,
+		book.ISBN,
+		book.Pages,
+		book.Language,
+		book.Genre,
+		book.Description,
+		book.CardID,
+	)
+	if err != nil {
+		if isError := strings.Contains(err.Error(), "a foreign key constraint fails"); isError {
+			return helper.ErrorResponse(http.StatusUnprocessableEntity, "failed to insert book, data card_id not valid.")
+		}
+		return helper.ErrorResponse(http.StatusInternalServerError, "failed to insert book")
+	}
+	return nil
 }
