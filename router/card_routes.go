@@ -8,6 +8,5 @@ import (
 func RegisterCardRoutes(app *fiber.App, controller *controllers.CardController) {
 	app.Get("/cards", controller.GetCards)
 	app.Get("/cards/id/:id", controller.GetCardByID)
-	app.Get("/cards/uid/:uid", controller.GetCardTypeByUID)
-
+	app.Get("/check_card", controller.GetCardTypeByUID)
 }
