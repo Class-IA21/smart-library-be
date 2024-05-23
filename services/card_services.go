@@ -12,7 +12,7 @@ import (
 
 type CardServiceInterface interface {
 	GetCards(ctx context.Context, page, pageSize int) ([]*entity.Card, *entity.ErrorResponse)
-	GetCardTypeByUID(ctx context.Context, uid string) (data any, cardType string, err *entity.ErrorResponse)
+	GetCardTypeByUID(ctx context.Context, uid string) (id int, cardType string, err *entity.ErrorResponse)
 	GetCardByUID(ctx context.Context, uid string) (*entity.Card, *entity.ErrorResponse)
 	GetCardByID(ctx context.Context, id int) (*entity.Card, *entity.ErrorResponse)
 }
@@ -37,27 +37,27 @@ func (s *CardServices) GetCards(ctx context.Context, page, pageSize int) ([]*ent
 	return s.CardRepository.GetCards(ctx, s.db, page, pageSize)
 }
 
-func (s *CardServices) GetCardTypeByUID(ctx context.Context, uid string) (data any, cardType string, err *entity.ErrorResponse) {
+func (s *CardServices) GetCardTypeByUID(ctx context.Context, uid string) (id int, cardType string, err *entity.ErrorResponse) {
 	result, err := s.CardRepository.GetCardByUID(ctx, s.db, uid)
 	if err != nil {
-		return nil, "", err
+		return 0, "", err
 	}
 
 	switch result.Type {
 	case "student":
 		result, err := s.StudentRepository.GetStudentByCardID(ctx, s.db, result.ID)
 		if err != nil {
-			return nil, "", err
+			return 0, "", err
 		}
-		return result, "student", nil
+		return result.ID, "student", nil
 	case "book":
 		result, err := s.BookRepository.GetBookByCardID(ctx, s.db, result.ID)
 		if err != nil {
-			return nil, "", err
+			return 0, "", err
 		}
-		return result, "book", nil
+		return result.ID, "book", nil
 	default:
-		return nil, "", helper.ErrorResponse(http.StatusNotFound, "rfid not registered")
+		return 0, "", helper.ErrorResponse(http.StatusNotFound, "rfid not registered")
 	}
 }
 
