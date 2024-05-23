@@ -9,6 +9,6 @@ func RegisterBookRoutes(app *fiber.App, controller *controllers.BookController) 
 	app.Get("/books/:id", controller.GetBookByID)
 	app.Delete("/books/:id", controller.DeleteBookByID)
 	app.Put("/books/:id", controller.UpdateBookByID)
-	app.Get("/books/card/:cardId", controller.GetBookByCardID)
+	app.Post("/books", controller.InsertBook)
 	app.Get("/books", controller.GetBooks)
 }

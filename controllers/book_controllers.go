@@ -15,7 +15,7 @@ type BookControllerInterface interface {
 	GetBooks(c *fiber.Ctx) error
 	DeleteBookByID(c *fiber.Ctx) error
 	UpdateBookByID(c *fiber.Ctx) error
-	GetBookByCardID(c *fiber.Ctx) error
+	InsertBook(c *fiber.Ctx) error
 }
 
 type BookController struct {
@@ -39,12 +39,7 @@ func (c *BookController) GetBookByID(ctx *fiber.Ctx) error {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
-	response := entity.ResponseWebWithData{
-		Error:   false,
-		Message: "OK",
-		Data:    book,
-	}
-
+	response := helper.SuccessResponseWithData(http.StatusOK, "OK", book)
 	return ctx.JSON(response)
 }
 
@@ -58,20 +53,15 @@ func (c *BookController) GetBooks(ctx *fiber.Ctx) error {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
-	response := entity.ResponseWebWithData{
-		Error:   false,
-		Message: "OK",
-		Data:    books,
-	}
-
+	response := helper.SuccessResponseWithData(http.StatusOK, "OK", books)
 	return ctx.JSON(response)
 }
 
 func (c *BookController) DeleteBookByID(ctx *fiber.Ctx) error {
 	id, err := strconv.Atoi(ctx.Params("id"))
 	if err != nil || id <= 0 {
-		return ctx.Status(fiber.StatusBadRequest).
-			JSON(helper.ErrorResponse(http.StatusBadRequest, "Invalid book id"))
+		errorResponse := helper.ErrorResponse(http.StatusBadRequest, "Invalid book id")
+		return ctx.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
 
 	errorResponse := c.service.DeleteBookByID(ctx.Context(), id)
@@ -79,18 +69,19 @@ func (c *BookController) DeleteBookByID(ctx *fiber.Ctx) error {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
-	response := entity.ResponseWebWithoutData{
-		Error:   false,
-		Message: "Successfully delete book.",
-	}
+	response := helper.SuccessResponseWithoutData(http.StatusOK, "Successfully delete book.")
 	return ctx.Status(http.StatusOK).JSON(response)
 }
 
 func (c *BookController) UpdateBookByID(ctx *fiber.Ctx) error {
 	var book entity.Book
 	if err := ctx.BodyParser(&book); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).
-			JSON(helper.ErrorResponse(http.StatusBadRequest, "Invalid request payload"))
+		errorResponse := helper.ErrorResponse(http.StatusBadRequest, "Invalid request payload")
+		return ctx.Status(fiber.StatusBadRequest).JSON(errorResponse)
+	}
+
+	if errorResponse := helper.ValidateStruct(&book); errorResponse != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
 	}
 
 	errorResponse := c.service.UpdateBookByID(ctx.Context(), &book)
@@ -98,29 +89,26 @@ func (c *BookController) UpdateBookByID(ctx *fiber.Ctx) error {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
-	response := entity.ResponseWebWithoutData{
-		Error:   false,
-		Message: "Successfully update book.",
-	}
+	response := helper.SuccessResponseWithoutData(http.StatusOK, "Successfully delete book.")
 	return ctx.Status(http.StatusOK).JSON(response)
 }
 
-func (c *BookController) GetBookByCardID(ctx *fiber.Ctx) error {
-	cardID, err := strconv.Atoi(ctx.Params("cardId"))
-	if err != nil || cardID <= 0 {
-		return ctx.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse(http.StatusBadRequest, "type card id only integer"))
+func (c *BookController) InsertBook(ctx *fiber.Ctx) error {
+	var book entity.Book
+	if err := ctx.BodyParser(&book); err != nil {
+		errorResponse := helper.ErrorResponse(http.StatusBadRequest, "Invalid request payload")
+		return ctx.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
 
-	book, errorResponse := c.service.GetBookByCardID(ctx.Context(), cardID)
+	if errorResponse := helper.ValidateStruct(&book); errorResponse != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
+	}
+
+	errorResponse := c.service.InsertBook(ctx.Context(), &book)
 	if errorResponse != nil {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
-	response := entity.ResponseWebWithData{
-		Error:   false,
-		Message: "OK",
-		Data:    book,
-	}
-
-	return ctx.JSON(response)
+	response := helper.SuccessResponseWithoutData(http.StatusCreated, "Book successfully inserted")
+	return ctx.Status(http.StatusCreated).JSON(response)
 }

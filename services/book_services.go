@@ -16,6 +16,7 @@ type BookServiceInterface interface {
 	GetBookByCardID(ctx context.Context, cardID int) (*entity.Book, *entity.ErrorResponse)
 	DeleteBookByID(ctx context.Context, bookID int) *entity.ErrorResponse
 	UpdateBookByID(ctx context.Context, book *entity.Book) *entity.ErrorResponse
+	InsertBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse
 }
 
 type BookService struct {
@@ -95,6 +96,27 @@ func (s *BookService) UpdateBookByID(ctx context.Context, book *entity.Book) *en
 	}
 
 	errorResponse = s.repo.UpdateBookByID(ctx, tx, book)
+	if errorResponse != nil {
+		tx.Rollback()
+		return errorResponse
+	}
+
+	tx.Commit()
+	return nil
+}
+
+func (s *BookService) InsertBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse {
+
+	if book == nil {
+		return helper.ErrorResponse(http.StatusBadRequest, "Payload can't be null")
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return helper.ErrorResponse(http.StatusInternalServerError, err.Error())
+	}
+
+	errorResponse := s.repo.InsertBook(ctx, tx, book)
 	if errorResponse != nil {
 		tx.Rollback()
 		return errorResponse

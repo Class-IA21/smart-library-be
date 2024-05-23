@@ -21,6 +21,8 @@ func main() {
 	bookController := controllers.NewBookController(bookService)
 
 	studentRepository := repository.NewStudentRepository()
+	studentService := services.NewStudentServices(database, studentRepository)
+	studentController := controllers.NewStudentController(studentService)
 
 	cardRepository := repository.NewCardRepository()
 	cardService := services.NewCardServices(database, bookRepository, cardRepository, studentRepository)
@@ -36,5 +38,6 @@ func main() {
 
 	router.RegisterBookRoutes(app, bookController)
 	router.RegisterCardRoutes(app, cardController)
+	router.RegisterStudentRoutes(app, studentController)
 	log.Fatal(app.Listen(":3000"))
 }

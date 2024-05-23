@@ -15,6 +15,9 @@ type CardServiceInterface interface {
 	GetCardTypeByUID(ctx context.Context, uid string) (id int, cardType string, err *entity.ErrorResponse)
 	GetCardByUID(ctx context.Context, uid string) (*entity.Card, *entity.ErrorResponse)
 	GetCardByID(ctx context.Context, id int) (*entity.Card, *entity.ErrorResponse)
+	InsertCard(ctx context.Context, card *entity.Card) *entity.ErrorResponse
+	UpdateCard(ctx context.Context, id int, card *entity.Card) *entity.ErrorResponse
+	DeleteCard(ctx context.Context, id int) *entity.ErrorResponse
 }
 
 type CardServices struct {
@@ -77,4 +80,44 @@ func (s *CardServices) GetCardByID(ctx context.Context, id int) (*entity.Card, *
 	}
 
 	return result, nil
+}
+
+func (s *CardServices) InsertCard(ctx context.Context, card *entity.Card) *entity.ErrorResponse {
+	return s.CardRepository.InsertCard(ctx, s.db, card)
+}
+
+func (s *CardServices) UpdateCard(ctx context.Context, id int, card *entity.Card) *entity.ErrorResponse {
+	existingCard, err := s.CardRepository.GetCardByID(ctx, s.db, id)
+	if err != nil {
+		return err
+	}
+
+	if existingCard == nil {
+		return helper.ErrorResponse(http.StatusNotFound, "Card not found")
+	}
+
+	err = s.CardRepository.UpdateCard(ctx, s.db, card)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *CardServices) DeleteCard(ctx context.Context, id int) *entity.ErrorResponse {
+	existingCard, err := s.CardRepository.GetCardByID(ctx, s.db, id)
+	if err != nil {
+		return err
+	}
+
+	if existingCard == nil {
+		return helper.ErrorResponse(http.StatusNotFound, "Card not found")
+	}
+
+	err = s.CardRepository.DeleteCard(ctx, s.db, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
