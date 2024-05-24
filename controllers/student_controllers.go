@@ -20,10 +20,10 @@ type StudentControllerInterface interface {
 }
 
 type StudentController struct {
-	service services.StudentService
+	service *services.StudentServices
 }
 
-func NewStudentController(service services.StudentService) *StudentController {
+func NewStudentController(service *services.StudentServices) *StudentController {
 	return &StudentController{
 		service: service,
 	}
@@ -60,19 +60,19 @@ func (c *StudentController) GetStudentByID(ctx *fiber.Ctx) error {
 }
 
 func (c *StudentController) InsertStudent(ctx *fiber.Ctx) error {
-	student := new(entity.Student)
-	if err := ctx.BodyParser(student); err != nil {
+	var student entity.Student
+	if err := ctx.BodyParser(&student); err != nil {
 		errorResponse := helper.ErrorResponse(http.StatusBadRequest, err.Error())
 		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
 	}
 
-	errorResponse := c.service.InsertStudent(ctx.Context(), student)
-	if errorResponse != nil {
-		return ctx.Status(errorResponse.Code).JSON(errorResponse)
-	}
-
 	if errorResponse := helper.ValidateStruct(&student); errorResponse != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
+	}
+
+	errorResponse := c.service.InsertStudent(ctx.Context(), &student)
+	if errorResponse != nil {
+		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
 	response := helper.SuccessResponseWithoutData(http.StatusOK, "Data student successfully created.")

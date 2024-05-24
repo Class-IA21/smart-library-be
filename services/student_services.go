@@ -10,7 +10,7 @@ import (
 	"github.com/dimassfeb-09/smart-library-be/repository"
 )
 
-type StudentService interface {
+type StudentServiceInterface interface {
 	GetStudentByID(ctx context.Context, id int) (*entity.Student, *entity.ErrorResponse)
 	InsertStudent(ctx context.Context, student *entity.Student) *entity.ErrorResponse
 	UpdateStudent(ctx context.Context, student *entity.Student) *entity.ErrorResponse
@@ -28,6 +28,14 @@ func NewStudentServices(db *sql.DB, studentRepository *repository.StudentReposit
 		db:                db,
 		StudentRepository: studentRepository,
 	}
+}
+
+func (s *StudentServices) GetStudentByCardID(ctx context.Context, cardID int) (*entity.Student, *entity.ErrorResponse) {
+	if cardID <= 0 {
+		return nil, helper.ErrorResponse(http.StatusBadRequest, "invalid card id")
+	}
+
+	return s.StudentRepository.GetStudentByCardID(ctx, s.db, cardID)
 }
 
 func (s *StudentServices) GetStudentByID(ctx context.Context, id int) (*entity.Student, *entity.ErrorResponse) {

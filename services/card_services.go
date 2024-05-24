@@ -22,17 +22,17 @@ type CardServiceInterface interface {
 
 type CardServices struct {
 	db *sql.DB
-	*repository.BookRepository
 	*repository.CardRepository
-	*repository.StudentRepository
+	*BookServices
+	*StudentServices
 }
 
-func NewCardServices(db *sql.DB, bookRepository *repository.BookRepository, cardRepository *repository.CardRepository, studentRepository *repository.StudentRepository) *CardServices {
+func NewCardServices(db *sql.DB, cardRepository *repository.CardRepository, studentService *StudentServices, bookService *BookServices) *CardServices {
 	return &CardServices{
-		db:                db,
-		BookRepository:    bookRepository,
-		CardRepository:    cardRepository,
-		StudentRepository: studentRepository,
+		db:              db,
+		CardRepository:  cardRepository,
+		BookServices:    bookService,
+		StudentServices: studentService,
 	}
 }
 
@@ -48,13 +48,13 @@ func (s *CardServices) GetCardTypeByUID(ctx context.Context, uid string) (id int
 
 	switch result.Type {
 	case "student":
-		result, err := s.StudentRepository.GetStudentByCardID(ctx, s.db, result.ID)
+		result, err := s.StudentServices.GetStudentByCardID(ctx, result.ID)
 		if err != nil {
 			return 0, "", err
 		}
 		return result.ID, "student", nil
 	case "book":
-		result, err := s.BookRepository.GetBookByCardID(ctx, s.db, result.ID)
+		result, err := s.BookServices.GetBookByCardID(ctx, result.ID)
 		if err != nil {
 			return 0, "", err
 		}
