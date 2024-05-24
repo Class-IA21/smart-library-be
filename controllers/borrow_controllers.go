@@ -32,6 +32,11 @@ func (c *BorrowController) GetBorrowByTransactionID(ctx *fiber.Ctx) error {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
+	if borrow == nil {
+		response := helper.SuccessResponseWithoutData(http.StatusNotFound, "Transaction not found")
+		return ctx.JSON(response)
+	}
+
 	response := helper.SuccessResponseWithData(http.StatusOK, "OK", borrow)
 	return ctx.JSON(response)
 }

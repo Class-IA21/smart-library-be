@@ -22,8 +22,8 @@ func NewBorrowRepository() *BorrowRepository {
 	return &BorrowRepository{}
 }
 
-func (*BorrowRepository) GetBorrowByTransactionID(ctx context.Context, db *sql.DB, transactionID string) (*entity.Borrow, *entity.ErrorResponse) {
-	rows, err := db.QueryContext(ctx, "SELECT book_id, student_id, borrow_date, due_date, return_date FROM borrows WHERE transaction_id = ?", transactionID)
+func (*BorrowRepository) GetBorrowByTransactionID(ctx context.Context, db *sql.DB, trxID string) (*entity.Borrow, *entity.ErrorResponse) {
+	rows, err := db.QueryContext(ctx, "SELECT book_id, student_id, transaction_id, borrow_date, due_date, return_date FROM borrows WHERE transaction_id = ?", trxID)
 	if err != nil {
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
 	}
@@ -32,10 +32,10 @@ func (*BorrowRepository) GetBorrowByTransactionID(ctx context.Context, db *sql.D
 	var bookIds []int
 	var studentId int
 	var borrowDate, dueDate string
-	var returnDate sql.NullString
+	var returnDate, transactionID sql.NullString
 	for rows.Next() {
 		var bookId int
-		err := rows.Scan(&bookId, &studentId, &borrowDate, &dueDate, &returnDate)
+		err := rows.Scan(&bookId, &studentId, &transactionID, &borrowDate, &dueDate, &returnDate)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				return nil, helper.ErrorResponse(http.StatusNotFound, "data not found")
@@ -46,14 +46,19 @@ func (*BorrowRepository) GetBorrowByTransactionID(ctx context.Context, db *sql.D
 		bookIds = append(bookIds, bookId)
 	}
 
-	borrow.StudentID = studentId
-	borrow.BookIDS = bookIds
-	borrow.TransactionID = transactionID
-	borrow.BorrowDate = borrowDate
-	borrow.DueDate = dueDate
+	if !transactionID.Valid {
+		return nil, helper.ErrorResponse(http.StatusNotFound, "Transaction ID not found")
+	}
+
 	if returnDate.Valid {
 		borrow.ReturnDate = returnDate.String
 	}
+
+	borrow.TransactionID = transactionID.String
+	borrow.StudentID = studentId
+	borrow.BookIDS = bookIds
+	borrow.BorrowDate = borrowDate
+	borrow.DueDate = dueDate
 
 	return &borrow, nil
 }
