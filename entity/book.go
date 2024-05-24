@@ -11,7 +11,5 @@ type Book struct {
 	Language      string `json:"language" validate:"required"`
 	Genre         string `json:"genre" validate:"required"`
 	Description   string `json:"description" validate:"required"`
-	CreatedAt     string `json:"created_at"`
-	UpdatedAt     string `json:"updated_at"`
 	CardID        int    `json:"card_id" validate:"required,number"`
 }

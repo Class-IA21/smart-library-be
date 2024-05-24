@@ -56,8 +56,6 @@ func (*BookRepository) GetBooks(ctx context.Context, db *sql.DB, page, pageSize 
 			&book.Language,
 			&book.Genre,
 			&book.Description,
-			&book.CreatedAt,
-			&book.UpdatedAt,
 			&book.CardID,
 		)
 		if err != nil {
@@ -86,13 +84,12 @@ func (*BookRepository) GetBookByID(ctx context.Context, db *sql.DB, bookID int) 
 		&book.Language,
 		&book.Genre,
 		&book.Description,
-		&book.CreatedAt,
-		&book.UpdatedAt,
 		&book.CardID,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, helper.ErrorResponse(http.StatusNotFound, "id book not found")
+			message := fmt.Sprintf("book id %d not found", bookID)
+			return nil, helper.ErrorResponse(http.StatusNotFound, message)
 		}
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan book")
 	}
@@ -143,8 +140,6 @@ func (*BookRepository) GetBookByCardID(ctx context.Context, db *sql.DB, cardID i
 		&book.Language,
 		&book.Genre,
 		&book.Description,
-		&book.CreatedAt,
-		&book.UpdatedAt,
 		&book.CardID,
 	)
 	if err != nil {

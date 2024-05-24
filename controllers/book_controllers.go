@@ -19,10 +19,10 @@ type BookControllerInterface interface {
 }
 
 type BookController struct {
-	service *services.BookService
+	service *services.BookServices
 }
 
-func NewBookController(service *services.BookService) *BookController {
+func NewBookController(service *services.BookServices) *BookController {
 	return &BookController{
 		service: service,
 	}

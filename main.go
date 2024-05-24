@@ -17,7 +17,7 @@ func main() {
 	database, _ := db.Connection()
 
 	bookRepository := repository.NewBookRepository()
-	bookService := services.NewBookService(bookRepository, database)
+	bookService := services.NewBookServices(bookRepository, database)
 	bookController := controllers.NewBookController(bookService)
 
 	studentRepository := repository.NewStudentRepository()
@@ -25,8 +25,12 @@ func main() {
 	studentController := controllers.NewStudentController(studentService)
 
 	cardRepository := repository.NewCardRepository()
-	cardService := services.NewCardServices(database, bookRepository, cardRepository, studentRepository)
+	cardService := services.NewCardServices(database, cardRepository, studentService, bookService)
 	cardController := controllers.NewCardController(cardService)
+
+	borrowRepository := repository.NewBorrowRepository()
+	borrowService := services.NewBorrowServices(database, borrowRepository, studentService, bookService)
+	borrowController := controllers.NewBorrowController(borrowService)
 
 	app := fiber.New()
 
@@ -39,5 +43,6 @@ func main() {
 	router.RegisterBookRoutes(app, bookController)
 	router.RegisterCardRoutes(app, cardController)
 	router.RegisterStudentRoutes(app, studentController)
+	router.RegisterBorrowRoutes(app, borrowController)
 	log.Fatal(app.Listen(":3000"))
 }

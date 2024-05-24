@@ -10,7 +10,7 @@ import (
 	"github.com/dimassfeb-09/smart-library-be/repository"
 )
 
-type BookServiceInterface interface {
+type BookServicesInterface interface {
 	GetBooks(ctx context.Context, page, pageSize int) ([]*entity.Book, *entity.ErrorResponse)
 	GetBookByID(ctx context.Context, bookID int) (*entity.Book, *entity.ErrorResponse)
 	GetBookByCardID(ctx context.Context, cardID int) (*entity.Book, *entity.ErrorResponse)
@@ -19,30 +19,30 @@ type BookServiceInterface interface {
 	InsertBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse
 }
 
-type BookService struct {
+type BookServices struct {
 	repo *repository.BookRepository
 	db   *sql.DB
 }
 
-func NewBookService(repo *repository.BookRepository, db *sql.DB) *BookService {
-	return &BookService{
+func NewBookServices(repo *repository.BookRepository, db *sql.DB) *BookServices {
+	return &BookServices{
 		repo: repo,
 		db:   db,
 	}
 }
 
-func (s *BookService) GetBooks(ctx context.Context, page, pageSize int) ([]*entity.Book, *entity.ErrorResponse) {
+func (s *BookServices) GetBooks(ctx context.Context, page, pageSize int) ([]*entity.Book, *entity.ErrorResponse) {
 	return s.repo.GetBooks(ctx, s.db, page, pageSize)
 }
 
-func (s *BookService) GetBookByID(ctx context.Context, bookID int) (*entity.Book, *entity.ErrorResponse) {
+func (s *BookServices) GetBookByID(ctx context.Context, bookID int) (*entity.Book, *entity.ErrorResponse) {
 	if bookID <= 0 {
 		return nil, helper.ErrorResponse(http.StatusBadRequest, "invalid book id")
 	}
 	return s.repo.GetBookByID(ctx, s.db, bookID)
 }
 
-func (s *BookService) GetBookByCardID(ctx context.Context, cardID int) (*entity.Book, *entity.ErrorResponse) {
+func (s *BookServices) GetBookByCardID(ctx context.Context, cardID int) (*entity.Book, *entity.ErrorResponse) {
 	if cardID <= 0 {
 		return nil, helper.ErrorResponse(http.StatusBadRequest, "invalid card id")
 	}
@@ -50,7 +50,7 @@ func (s *BookService) GetBookByCardID(ctx context.Context, cardID int) (*entity.
 	return s.repo.GetBookByCardID(ctx, s.db, cardID)
 }
 
-func (s *BookService) DeleteBookByID(ctx context.Context, bookID int) *entity.ErrorResponse {
+func (s *BookServices) DeleteBookByID(ctx context.Context, bookID int) *entity.ErrorResponse {
 
 	_, errorResponse := s.repo.GetBookByID(ctx, s.db, bookID)
 	if errorResponse != nil {
@@ -76,7 +76,7 @@ func (s *BookService) DeleteBookByID(ctx context.Context, bookID int) *entity.Er
 	return nil
 }
 
-func (s *BookService) UpdateBookByID(ctx context.Context, book *entity.Book) *entity.ErrorResponse {
+func (s *BookServices) UpdateBookByID(ctx context.Context, book *entity.Book) *entity.ErrorResponse {
 	_, errorResponse := s.repo.GetBookByID(ctx, s.db, book.ID)
 	if errorResponse != nil {
 		return errorResponse
@@ -105,7 +105,7 @@ func (s *BookService) UpdateBookByID(ctx context.Context, book *entity.Book) *en
 	return nil
 }
 
-func (s *BookService) InsertBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse {
+func (s *BookServices) InsertBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse {
 
 	if book == nil {
 		return helper.ErrorResponse(http.StatusBadRequest, "Payload can't be null")
