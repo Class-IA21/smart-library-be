@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/dimassfeb-09/smart-library-be/entity"
 	"github.com/dimassfeb-09/smart-library-be/helper"
@@ -10,6 +11,7 @@ import (
 )
 
 type BorrowControllerInterface interface {
+	GetTransactionsByStudentID(c *fiber.Ctx) error
 	GetBorrowByTransactionID(c *fiber.Ctx) error
 	InsertBorrow(c *fiber.Ctx) error
 }
@@ -22,6 +24,22 @@ func NewBorrowController(service *services.BorrowServices) *BorrowController {
 	return &BorrowController{
 		service: service,
 	}
+}
+
+func (c *BorrowController) GetTransactionsByStudentID(ctx *fiber.Ctx) error {
+	studentId, err := strconv.Atoi(ctx.Params("studentId"))
+	if err != nil || studentId <= 0 {
+		errorResponse := helper.ErrorResponse(http.StatusBadRequest, "ID mahasiswa tidak valid")
+		return ctx.Status(fiber.StatusBadRequest).JSON(errorResponse)
+	}
+
+	student, errorResponse := c.service.GetTransactionsByStudentID(ctx.Context(), studentId)
+	if errorResponse != nil {
+		return ctx.Status(errorResponse.Code).JSON(errorResponse)
+	}
+
+	response := helper.SuccessResponseWithData(http.StatusOK, "OK", student)
+	return ctx.JSON(response)
 }
 
 func (c *BorrowController) GetBorrowByTransactionID(ctx *fiber.Ctx) error {
