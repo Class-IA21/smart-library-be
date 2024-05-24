@@ -12,6 +12,7 @@ import (
 )
 
 type BorrowRepositoryInterface interface {
+	GetTransactionsByStudentID(ctx context.Context, db *sql.DB, studentID int) ([]string, *entity.ErrorResponse)
 	GetBorrowByTransactionID(ctx context.Context, db *sql.DB, transactionID string) (*entity.Borrow, *entity.ErrorResponse)
 	InsertBorrow(ctx context.Context, tx *sql.Tx, borrow *entity.Borrow) *entity.ErrorResponse
 }
@@ -20,6 +21,54 @@ type BorrowRepository struct{}
 
 func NewBorrowRepository() *BorrowRepository {
 	return &BorrowRepository{}
+}
+
+func (*BorrowRepository) GetTransactionsByStudentID(ctx context.Context, db *sql.DB, studentID int) (*entity.BorrowList, *entity.ErrorResponse) {
+
+	rows, err := db.QueryContext(ctx, "SELECT transaction_id, student_id, book_id, borrow_date, due_date, return_date  FROM borrows WHERE student_id = ?", studentID)
+	if err != nil {
+		fmt.Println(err)
+		return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
+	defer rows.Close()
+
+	var borrowList entity.BorrowList
+	var transactions []entity.Transaction
+	var transactionMap = make(map[string]*entity.Transaction)
+
+	for rows.Next() {
+		var newTransactionID string
+		var bookID int
+		var borrowDate string
+		var dueDate string
+		var returnDate sql.NullString
+		err := rows.Scan(&newTransactionID, &studentID, &bookID, &borrowDate, &dueDate, &returnDate)
+		if err != nil {
+			return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan borrow")
+		}
+
+		if existingTransaction, ok := transactionMap[newTransactionID]; ok {
+			existingTransaction.BookIDS = append(existingTransaction.BookIDS, bookID)
+		} else {
+			transaction := entity.Transaction{
+				ID:         newTransactionID,
+				BorrowDate: borrowDate,
+				DueDate:    dueDate,
+				ReturnDate: returnDate.String,
+				BookIDS:    []int{bookID},
+			}
+			transactionMap[newTransactionID] = &transaction
+		}
+	}
+
+	for _, value := range transactionMap {
+		transactions = append(transactions, *value)
+	}
+
+	borrowList.StudentID = studentID
+	borrowList.Transactions = transactions
+
+	return &borrowList, nil
 }
 
 func (*BorrowRepository) GetBorrowByTransactionID(ctx context.Context, db *sql.DB, trxID string) (*entity.Borrow, *entity.ErrorResponse) {
@@ -37,10 +86,6 @@ func (*BorrowRepository) GetBorrowByTransactionID(ctx context.Context, db *sql.D
 		var bookId int
 		err := rows.Scan(&bookId, &studentId, &transactionID, &borrowDate, &dueDate, &returnDate)
 		if err != nil {
-			if err == sql.ErrNoRows {
-				return nil, helper.ErrorResponse(http.StatusNotFound, "data not found")
-			}
-			fmt.Println(err)
 			return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan borrow")
 		}
 		bookIds = append(bookIds, bookId)

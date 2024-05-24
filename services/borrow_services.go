@@ -10,6 +10,7 @@ import (
 )
 
 type BorrowServiceInterface interface {
+	GetTransactionsByStudentID(ctx context.Context, studentId int) (transactionID []string, error *entity.ErrorResponse)
 	GetBorrowByTransactionID(ctx context.Context, transactionID string) (*entity.Borrow, *entity.ErrorResponse)
 	InsertBorrow(ctx context.Context, borrow *entity.Borrow) *entity.ErrorResponse
 }
@@ -23,6 +24,11 @@ type BorrowServices struct {
 
 func NewBorrowServices(db *sql.DB, borrowRepo *repository.BorrowRepository, studentService *StudentServices, bookService *BookServices) *BorrowServices {
 	return &BorrowServices{DB: db, BorrowRepository: borrowRepo, StudentServices: studentService, BookServices: bookService}
+}
+
+func (s *BorrowServices) GetTransactionsByStudentID(ctx context.Context, studentId int) (*entity.BorrowList, *entity.ErrorResponse) {
+
+	return s.BorrowRepository.GetTransactionsByStudentID(ctx, s.DB, studentId)
 }
 
 func (s *BorrowServices) GetBorrowByTransactionID(ctx context.Context, transactionID string) (*entity.Borrow, *entity.ErrorResponse) {
