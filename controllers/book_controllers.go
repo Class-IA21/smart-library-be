@@ -74,11 +74,19 @@ func (c *BookController) DeleteBookByID(ctx *fiber.Ctx) error {
 }
 
 func (c *BookController) UpdateBookByID(ctx *fiber.Ctx) error {
+
+	id, err := strconv.Atoi(ctx.Params("id"))
+	if err != nil || id <= 0 {
+		errorResponse := helper.ErrorResponse(http.StatusBadRequest, "Invalid book id")
+		return ctx.Status(fiber.StatusBadRequest).JSON(errorResponse)
+	}
+
 	var book entity.Book
 	if err := ctx.BodyParser(&book); err != nil {
 		errorResponse := helper.ErrorResponse(http.StatusBadRequest, "Invalid request payload")
 		return ctx.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
+	book.ID = id
 
 	if errorResponse := helper.ValidateStruct(&book); errorResponse != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
