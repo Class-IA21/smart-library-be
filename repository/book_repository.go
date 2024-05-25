@@ -16,7 +16,7 @@ type BookRepositoryInterface interface {
 	GetAllBooks(ctx context.Context, db *sql.DB) ([]*entity.Book, *entity.ErrorResponse)
 	GetBookByCardID(ctx context.Context, db *sql.DB, cardID int) (*entity.Book, *entity.ErrorResponse)
 	DeleteBookByID(ctx context.Context, tx *sql.Tx, bookID int) *entity.ErrorResponse
-	UpdateBookByID(ctx context.Context, tx *sql.Tx, book *entity.Book) *entity.ErrorResponse
+	UpdateBook(ctx context.Context, tx *sql.Tx, book *entity.Book) *entity.ErrorResponse
 	InsertBook(ctx context.Context, tx *sql.Tx, book *entity.Book) *entity.ErrorResponse
 }
 
@@ -105,7 +105,7 @@ func (*BookRepository) DeleteBookByID(ctx context.Context, tx *sql.Tx, bookID in
 	return nil
 }
 
-func (*BookRepository) UpdateBookByID(ctx context.Context, tx *sql.Tx, book *entity.Book) *entity.ErrorResponse {
+func (*BookRepository) UpdateBook(ctx context.Context, tx *sql.Tx, book *entity.Book) *entity.ErrorResponse {
 	_, err := tx.ExecContext(ctx, "UPDATE books SET title=?, author=?, publisher=?, published_date=?, isbn=?, pages=?, language=?, genre=?, description=?, card_id=? WHERE id=?",
 		book.Title,
 		book.Author,
@@ -120,6 +120,7 @@ func (*BookRepository) UpdateBookByID(ctx context.Context, tx *sql.Tx, book *ent
 		book.ID,
 	)
 	if err != nil {
+		fmt.Println(err)
 		return helper.ErrorResponse(http.StatusInternalServerError, "failed to update book")
 	}
 	return nil

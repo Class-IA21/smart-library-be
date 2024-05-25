@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 
 	"github.com/dimassfeb-09/smart-library-be/controllers"
@@ -13,9 +14,16 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 )
 
-func main() {
-	database, _ := db.Connection()
+type App struct {
+	BookController        *controllers.BookController
+	StudentController     *controllers.StudentController
+	CardController        *controllers.CardController
+	BorrowController      *controllers.BorrowController
+	BookCardController    *controllers.BookCardController
+	StudentCardController *controllers.StudentCardController
+}
 
+func NewApp(database *sql.DB) *App {
 	bookRepository := repository.NewBookRepository()
 	bookService := services.NewBookServices(bookRepository, database)
 	bookController := controllers.NewBookController(bookService)
@@ -32,6 +40,25 @@ func main() {
 	borrowService := services.NewBorrowServices(database, borrowRepository, studentService, bookService)
 	borrowController := controllers.NewBorrowController(borrowService)
 
+	bookCardService := services.NewBookCardServices(database, bookService, cardService)
+	bookCardController := controllers.NewBookCardController(bookService, bookCardService)
+
+	studentCardService := services.NewStudentCardServices(database, cardService, studentService)
+	studentCardController := controllers.NewStudentCardController(studentService, studentCardService)
+
+	return &App{
+		BookController:        bookController,
+		StudentController:     studentController,
+		CardController:        cardController,
+		BorrowController:      borrowController,
+		BookCardController:    bookCardController,
+		StudentCardController: studentCardController,
+	}
+}
+
+func main() {
+	database, _ := db.Connection()
+	controller := NewApp(database)
 	app := fiber.New()
 
 	app.Use(logger.New())
@@ -40,9 +67,9 @@ func main() {
 		Format: "PID ${pid} | [${ip}]:${port} ${status} - ${method} ${path}\n",
 	}))
 
-	router.RegisterBookRoutes(app, bookController)
-	router.RegisterCardRoutes(app, cardController)
-	router.RegisterStudentRoutes(app, studentController)
-	router.RegisterBorrowRoutes(app, borrowController)
+	router.RegisterBookRoutes(app, controller.BookController, controller.BookCardController)
+	router.RegisterCardRoutes(app, controller.CardController)
+	router.RegisterStudentRoutes(app, controller.StudentController, controller.StudentCardController)
+	router.RegisterBorrowRoutes(app, controller.BorrowController)
 	log.Fatal(app.Listen(":3000"))
 }
