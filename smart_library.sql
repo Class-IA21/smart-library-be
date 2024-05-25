@@ -79,6 +79,11 @@ CREATE TABLE `borrows` (
     `borrow_date` datetime DEFAULT CURRENT_TIMESTAMP,
     `due_date` datetime DEFAULT NULL,
     `return_date` datetime DEFAULT NULL,
+    `status` ENUM(
+        'pending',
+        'borrowed',
+        'returned'
+    ) DEFAULT 'pending',
     PRIMARY KEY (`id`),
     KEY `fk_book` (`book_id`),
     KEY `fk_student` (`student_id`),

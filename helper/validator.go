@@ -14,8 +14,11 @@ func ValidateStruct(v any) *entity.ErrorResponseWithErrors {
 	err := validate.Struct(v)
 	if err != nil {
 		var errors []string
-		for _, err := range err.(validator.ValidationErrors) {
+		for i, err := range err.(validator.ValidationErrors) {
 			errors = append(errors, fmt.Sprintf("Field: %s, Error: %s", strings.ToLower(err.Field()), err.Tag()))
+			if param := err.Param(); param != "" {
+				errors[i] += fmt.Sprintf(" %s", strings.ToLower(err.Param()))
+			}
 		}
 		return &entity.ErrorResponseWithErrors{
 			Error:   true,
