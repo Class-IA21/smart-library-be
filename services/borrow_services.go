@@ -3,8 +3,10 @@ package services
 import (
 	"context"
 	"database/sql"
+	"net/http"
 
 	"github.com/dimassfeb-09/smart-library-be/entity"
+	"github.com/dimassfeb-09/smart-library-be/helper"
 	"github.com/dimassfeb-09/smart-library-be/repository"
 	"github.com/google/uuid"
 )
@@ -13,6 +15,7 @@ type BorrowServiceInterface interface {
 	GetTransactionsByStudentID(ctx context.Context, studentId int) (transactionID []string, error *entity.ErrorResponse)
 	GetBorrowByTransactionID(ctx context.Context, transactionID string) (*entity.Borrow, *entity.ErrorResponse)
 	InsertBorrow(ctx context.Context, borrow *entity.Borrow) *entity.ErrorResponse
+	UpdateBorrow(ctx context.Context, borrow *entity.BorrowUpdate) *entity.ErrorResponse
 }
 
 type BorrowServices struct {
@@ -54,9 +57,9 @@ func (s *BorrowServices) InsertBorrow(ctx context.Context, borrow *entity.Borrow
 
 	tx, err := s.DB.Begin()
 	if err != nil {
-		tx.Rollback()
 		return nil
 	}
+	defer tx.Commit()
 
 	errorResponse = s.BorrowRepository.InsertBorrow(ctx, tx, borrow)
 	if errorResponse != nil {
@@ -64,6 +67,26 @@ func (s *BorrowServices) InsertBorrow(ctx context.Context, borrow *entity.Borrow
 		return errorResponse
 	}
 
-	tx.Commit()
+	return nil
+}
+
+func (s *BorrowServices) UpdateBorrow(ctx context.Context, borrow *entity.BorrowUpdate) *entity.ErrorResponse {
+	_, errorResponse := s.GetBorrowByTransactionID(ctx, borrow.TransactionID)
+	if errorResponse != nil {
+		return errorResponse
+	}
+
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
+	defer tx.Commit()
+
+	errorResponse = s.BorrowRepository.UpdateBorrow(ctx, tx, borrow)
+	if errorResponse != nil {
+		tx.Rollback()
+		return errorResponse
+	}
+
 	return nil
 }

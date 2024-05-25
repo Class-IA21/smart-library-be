@@ -14,6 +14,7 @@ type BorrowControllerInterface interface {
 	GetTransactionsByStudentID(c *fiber.Ctx) error
 	GetBorrowByTransactionID(c *fiber.Ctx) error
 	InsertBorrow(c *fiber.Ctx) error
+	UpdateBorrow(c *fiber.Ctx) error
 }
 
 type BorrowController struct {
@@ -77,4 +78,28 @@ func (c *BorrowController) InsertBorrow(ctx *fiber.Ctx) error {
 
 	response := helper.SuccessResponseWithoutData(http.StatusCreated, "Borrow successfully inserted")
 	return ctx.Status(http.StatusCreated).JSON(response)
+}
+
+func (c *BorrowController) UpdateBorrow(ctx *fiber.Ctx) error {
+
+	transactionID := ctx.Params("transactionId")
+
+	var borrow entity.BorrowUpdate
+	if err := ctx.BodyParser(&borrow); err != nil {
+		errorResponse := helper.ErrorResponse(http.StatusBadRequest, "Invalid request payload")
+		return ctx.Status(fiber.StatusBadRequest).JSON(errorResponse)
+	}
+	borrow.TransactionID = transactionID
+
+	if errorResponse := helper.ValidateStruct(&borrow); errorResponse != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
+	}
+
+	errorResponse := c.service.UpdateBorrow(ctx.Context(), &borrow)
+	if errorResponse != nil {
+		return ctx.Status(errorResponse.Code).JSON(errorResponse)
+	}
+
+	response := helper.SuccessResponseWithoutData(http.StatusCreated, "Borrow successfully updated")
+	return ctx.JSON(response)
 }

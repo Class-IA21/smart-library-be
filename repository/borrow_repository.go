@@ -15,6 +15,7 @@ type BorrowRepositoryInterface interface {
 	GetTransactionsByStudentID(ctx context.Context, db *sql.DB, studentID int) ([]string, *entity.ErrorResponse)
 	GetBorrowByTransactionID(ctx context.Context, db *sql.DB, transactionID string) (*entity.Borrow, *entity.ErrorResponse)
 	InsertBorrow(ctx context.Context, tx *sql.Tx, borrow *entity.Borrow) *entity.ErrorResponse
+	UpdateBorrow(ctx context.Context, tx *sql.Tx, borrow *entity.BorrowUpdate) *entity.ErrorResponse
 }
 
 type BorrowRepository struct{}
@@ -125,5 +126,27 @@ func (*BorrowRepository) InsertBorrow(ctx context.Context, tx *sql.Tx, borrow *e
 			return helper.ErrorResponse(http.StatusInternalServerError, "failed to insert borrow")
 		}
 	}
+	return nil
+}
+
+func (*BorrowRepository) UpdateBorrow(ctx context.Context, tx *sql.Tx, borrow *entity.BorrowUpdate) *entity.ErrorResponse {
+	query := "UPDATE borrows SET book_id = ?, status = ?"
+	var params []interface{}
+	params = append(params, borrow.BookID, borrow.Status)
+
+	if borrow.ReturnDate != "" {
+		query += ", return_date = ?"
+		params = append(params, borrow.ReturnDate)
+	}
+
+	query += " WHERE transaction_id = ? AND book_id = ?"
+	params = append(params, borrow.TransactionID, borrow.BookID)
+
+	_, err := tx.ExecContext(ctx, query, params...)
+	if err != nil {
+		fmt.Println(err)
+		return helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
+
 	return nil
 }

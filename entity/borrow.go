@@ -9,6 +9,14 @@ type Borrow struct {
 	ReturnDate    string `json:"return_date"`
 }
 
+type BorrowUpdate struct {
+	TransactionID string `json:"transaction_id"`
+	BookID        int    `json:"book_id" validate:"required"`
+	StudentID     int    `json:"student_id" validate:"required"`
+	ReturnDate    string `json:"return_date" validate:"required_if=Status returned"`
+	Status        string `json:"status" validate:"required,oneof=pending borrowed returned"`
+}
+
 type BorrowList struct {
 	StudentID    int           `json:"student_id"`
 	Transactions []Transaction `json:"transactions"`
