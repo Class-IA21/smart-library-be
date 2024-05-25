@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -30,7 +29,6 @@ func NewStudentController(service *services.StudentServices) *StudentController 
 }
 
 func (c *StudentController) GetStudents(ctx *fiber.Ctx) error {
-	fmt.Println("masukkk")
 	page, _ := strconv.Atoi(ctx.Query("page"))
 	pageSize, _ := strconv.Atoi(ctx.Query("pageSize"))
 
@@ -80,17 +78,24 @@ func (c *StudentController) InsertStudent(ctx *fiber.Ctx) error {
 }
 
 func (c *StudentController) UpdateStudent(ctx *fiber.Ctx) error {
-	student := new(entity.Student)
-	if err := ctx.BodyParser(student); err != nil {
+	id, err := strconv.Atoi(ctx.Params("id"))
+	if err != nil || id <= 0 {
+		return ctx.Status(fiber.StatusBadRequest).
+			JSON(helper.ErrorResponse(http.StatusBadRequest, "invalid id student"))
+	}
+
+	var student entity.Student
+	if err := ctx.BodyParser(&student); err != nil {
 		errorResponse := helper.ErrorResponse(http.StatusBadRequest, "Invalid payload request")
 		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
 	}
+	student.ID = id
 
 	if errorResponse := helper.ValidateStruct(&student); errorResponse != nil {
 		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
 	}
 
-	errorResponse := c.service.UpdateStudent(ctx.Context(), student)
+	errorResponse := c.service.UpdateStudent(ctx.Context(), &student)
 	if errorResponse != nil {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 

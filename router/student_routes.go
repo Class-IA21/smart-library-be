@@ -10,4 +10,5 @@ func RegisterStudentRoutes(app *fiber.App, controller *controllers.StudentContro
 	app.Get("/students/:id", controller.GetStudentByID)
 	app.Delete("/students/:id", controller.DeleteStudent)
 	app.Put("/students/:id", controller.UpdateStudent)
+	app.Post("/students", controller.InsertStudent)
 }
