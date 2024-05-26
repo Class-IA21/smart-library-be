@@ -15,31 +15,31 @@ type BookServicesInterface interface {
 	GetBookByID(ctx context.Context, bookID int) (*entity.Book, *entity.ErrorResponse)
 	GetBookByCardID(ctx context.Context, cardID int) (*entity.Book, *entity.ErrorResponse)
 	DeleteBookByID(ctx context.Context, bookID int) *entity.ErrorResponse
-	UpdateBookByID(ctx context.Context, book *entity.Book) *entity.ErrorResponse
+	UpdateBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse
 	InsertBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse
 }
 
 type BookServices struct {
-	repo *repository.BookRepository
-	db   *sql.DB
+	*repository.BookRepository
+	*sql.DB
 }
 
-func NewBookServices(repo *repository.BookRepository, db *sql.DB) *BookServices {
+func NewBookServices(br *repository.BookRepository, db *sql.DB) *BookServices {
 	return &BookServices{
-		repo: repo,
-		db:   db,
+		BookRepository: br,
+		DB:             db,
 	}
 }
 
 func (s *BookServices) GetBooks(ctx context.Context, page, pageSize int) ([]*entity.Book, *entity.ErrorResponse) {
-	return s.repo.GetBooks(ctx, s.db, page, pageSize)
+	return s.BookRepository.GetBooks(ctx, s.DB, page, pageSize)
 }
 
 func (s *BookServices) GetBookByID(ctx context.Context, bookID int) (*entity.Book, *entity.ErrorResponse) {
 	if bookID <= 0 {
 		return nil, helper.ErrorResponse(http.StatusBadRequest, "invalid book id")
 	}
-	return s.repo.GetBookByID(ctx, s.db, bookID)
+	return s.BookRepository.GetBookByID(ctx, s.DB, bookID)
 }
 
 func (s *BookServices) GetBookByCardID(ctx context.Context, cardID int) (*entity.Book, *entity.ErrorResponse) {
@@ -47,17 +47,17 @@ func (s *BookServices) GetBookByCardID(ctx context.Context, cardID int) (*entity
 		return nil, helper.ErrorResponse(http.StatusBadRequest, "invalid card id")
 	}
 
-	return s.repo.GetBookByCardID(ctx, s.db, cardID)
+	return s.BookRepository.GetBookByCardID(ctx, s.DB, cardID)
 }
 
 func (s *BookServices) DeleteBookByID(ctx context.Context, bookID int) *entity.ErrorResponse {
 
-	_, errorResponse := s.repo.GetBookByID(ctx, s.db, bookID)
+	_, errorResponse := s.BookRepository.GetBookByID(ctx, s.DB, bookID)
 	if errorResponse != nil {
 		return errorResponse
 	}
 
-	tx, err := s.db.Begin()
+	tx, err := s.DB.Begin()
 	if err != nil {
 		return helper.ErrorResponse(http.StatusInternalServerError, err.Error())
 	}
@@ -66,7 +66,7 @@ func (s *BookServices) DeleteBookByID(ctx context.Context, bookID int) *entity.E
 		return helper.ErrorResponse(http.StatusBadRequest, "invalid book ID")
 	}
 
-	errorResponse = s.repo.DeleteBookByID(ctx, tx, bookID)
+	errorResponse = s.BookRepository.DeleteBookByID(ctx, tx, bookID)
 	if errorResponse != nil {
 		tx.Rollback()
 		return helper.ErrorResponse(http.StatusInternalServerError, err.Error())
@@ -76,13 +76,8 @@ func (s *BookServices) DeleteBookByID(ctx context.Context, bookID int) *entity.E
 	return nil
 }
 
-func (s *BookServices) UpdateBookByID(ctx context.Context, book *entity.Book) *entity.ErrorResponse {
-	_, errorResponse := s.repo.GetBookByID(ctx, s.db, book.ID)
-	if errorResponse != nil {
-		return errorResponse
-	}
-
-	tx, err := s.db.Begin()
+func (s *BookServices) UpdateBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse {
+	tx, err := s.DB.Begin()
 	if err != nil {
 		return helper.ErrorResponse(http.StatusInternalServerError, err.Error())
 	}
@@ -95,28 +90,7 @@ func (s *BookServices) UpdateBookByID(ctx context.Context, book *entity.Book) *e
 		return helper.ErrorResponse(http.StatusBadRequest, "Payload can't be null")
 	}
 
-	errorResponse = s.repo.UpdateBookByID(ctx, tx, book)
-	if errorResponse != nil {
-		tx.Rollback()
-		return errorResponse
-	}
-
-	tx.Commit()
-	return nil
-}
-
-func (s *BookServices) InsertBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse {
-
-	if book == nil {
-		return helper.ErrorResponse(http.StatusBadRequest, "Payload can't be null")
-	}
-
-	tx, err := s.db.Begin()
-	if err != nil {
-		return helper.ErrorResponse(http.StatusInternalServerError, err.Error())
-	}
-
-	errorResponse := s.repo.InsertBook(ctx, tx, book)
+	errorResponse := s.BookRepository.UpdateBook(ctx, tx, book)
 	if errorResponse != nil {
 		tx.Rollback()
 		return errorResponse

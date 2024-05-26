@@ -86,7 +86,7 @@ func (*StudentRepository) GetStudentByID(ctx context.Context, db *sql.DB, id int
 }
 
 func (*StudentRepository) InsertStudent(ctx context.Context, tx *sql.Tx, student *entity.Student) *entity.ErrorResponse {
-	_, err := tx.ExecContext(ctx, "INSERT INTO students VALUES (?, ?, ?, ?)", student.ID, student.Name, student.NPM, student.CardID)
+	_, err := tx.ExecContext(ctx, "INSERT INTO students (name, npm, card_id) VALUES (?, ?, ?)", student.Name, student.NPM, student.CardID)
 	if err != nil {
 		return helper.ErrorResponse(http.StatusInternalServerError, "failed to insert student")
 	}

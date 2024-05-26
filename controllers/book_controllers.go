@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/dimassfeb-09/smart-library-be/entity"
 	"github.com/dimassfeb-09/smart-library-be/helper"
 	"github.com/dimassfeb-09/smart-library-be/services"
 	"github.com/gofiber/fiber/v2"
@@ -71,44 +70,4 @@ func (c *BookController) DeleteBookByID(ctx *fiber.Ctx) error {
 
 	response := helper.SuccessResponseWithoutData(http.StatusOK, "Successfully delete book.")
 	return ctx.Status(http.StatusOK).JSON(response)
-}
-
-func (c *BookController) UpdateBookByID(ctx *fiber.Ctx) error {
-	var book entity.Book
-	if err := ctx.BodyParser(&book); err != nil {
-		errorResponse := helper.ErrorResponse(http.StatusBadRequest, "Invalid request payload")
-		return ctx.Status(fiber.StatusBadRequest).JSON(errorResponse)
-	}
-
-	if errorResponse := helper.ValidateStruct(&book); errorResponse != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
-	}
-
-	errorResponse := c.service.UpdateBookByID(ctx.Context(), &book)
-	if errorResponse != nil {
-		return ctx.Status(errorResponse.Code).JSON(errorResponse)
-	}
-
-	response := helper.SuccessResponseWithoutData(http.StatusOK, "Successfully delete book.")
-	return ctx.Status(http.StatusOK).JSON(response)
-}
-
-func (c *BookController) InsertBook(ctx *fiber.Ctx) error {
-	var book entity.Book
-	if err := ctx.BodyParser(&book); err != nil {
-		errorResponse := helper.ErrorResponse(http.StatusBadRequest, "Invalid request payload")
-		return ctx.Status(fiber.StatusBadRequest).JSON(errorResponse)
-	}
-
-	if errorResponse := helper.ValidateStruct(&book); errorResponse != nil {
-		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
-	}
-
-	errorResponse := c.service.InsertBook(ctx.Context(), &book)
-	if errorResponse != nil {
-		return ctx.Status(errorResponse.Code).JSON(errorResponse)
-	}
-
-	response := helper.SuccessResponseWithoutData(http.StatusCreated, "Book successfully inserted")
-	return ctx.Status(http.StatusCreated).JSON(response)
 }

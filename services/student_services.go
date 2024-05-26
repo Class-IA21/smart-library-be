@@ -12,8 +12,6 @@ import (
 
 type StudentServiceInterface interface {
 	GetStudentByID(ctx context.Context, id int) (*entity.Student, *entity.ErrorResponse)
-	InsertStudent(ctx context.Context, student *entity.Student) *entity.ErrorResponse
-	UpdateStudent(ctx context.Context, student *entity.Student) *entity.ErrorResponse
 	DeleteStudent(ctx context.Context, id int) *entity.ErrorResponse
 	GetStudents(ctx context.Context, page int, pageSize int) ([]*entity.Student, *entity.ErrorResponse)
 }
@@ -40,49 +38,6 @@ func (s *StudentServices) GetStudentByCardID(ctx context.Context, cardID int) (*
 
 func (s *StudentServices) GetStudentByID(ctx context.Context, id int) (*entity.Student, *entity.ErrorResponse) {
 	return s.StudentRepository.GetStudentByID(ctx, s.db, id)
-}
-
-func (s *StudentServices) InsertStudent(ctx context.Context, student *entity.Student) *entity.ErrorResponse {
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return helper.ErrorResponse(http.StatusInternalServerError, "transaction start failed")
-	}
-	defer tx.Rollback()
-
-	errResp := s.StudentRepository.InsertStudent(ctx, tx, student)
-	if errResp != nil {
-		return errResp
-	}
-
-	if err := tx.Commit(); err != nil {
-		return helper.ErrorResponse(http.StatusInternalServerError, "transaction commit failed")
-	}
-
-	return nil
-}
-
-func (s *StudentServices) UpdateStudent(ctx context.Context, student *entity.Student) *entity.ErrorResponse {
-	_, errorResponse := s.StudentRepository.GetStudentByID(ctx, s.db, student.ID)
-	if errorResponse != nil {
-		return errorResponse
-	}
-
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return helper.ErrorResponse(http.StatusInternalServerError, "transaction start failed")
-	}
-	defer tx.Rollback()
-
-	errorResponse = s.StudentRepository.UpdateStudent(ctx, tx, student.ID, student)
-	if errorResponse != nil {
-		return errorResponse
-	}
-
-	if err := tx.Commit(); err != nil {
-		return helper.ErrorResponse(http.StatusInternalServerError, "transaction commit failed")
-	}
-
-	return nil
 }
 
 func (s *StudentServices) DeleteStudent(ctx context.Context, id int) *entity.ErrorResponse {
