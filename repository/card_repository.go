@@ -40,6 +40,7 @@ func (r *CardRepository) GetCards(ctx context.Context, db *sql.DB, page, pageSiz
 	if err != nil {
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, err.Error())
 	}
+	defer rows.Close()
 
 	var cards []*entity.Card
 	for rows.Next() {

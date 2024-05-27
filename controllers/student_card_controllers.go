@@ -16,13 +16,11 @@ type StudentCardControllerInterface interface {
 }
 
 type StudentCardController struct {
-	*services.StudentServices
 	*services.StudentCardServices
 }
 
-func NewStudentCardController(ss *services.StudentServices, sc *services.StudentCardServices) *StudentCardController {
+func NewStudentCardController(sc *services.StudentCardServices) *StudentCardController {
 	return &StudentCardController{
-		StudentServices:     ss,
 		StudentCardServices: sc,
 	}
 }
