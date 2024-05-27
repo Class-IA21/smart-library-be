@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/dimassfeb-09/smart-library-be/entity"
@@ -51,7 +52,6 @@ func (s *BookServices) GetBookByCardID(ctx context.Context, cardID int) (*entity
 }
 
 func (s *BookServices) DeleteBookByID(ctx context.Context, bookID int) *entity.ErrorResponse {
-
 	_, errorResponse := s.BookRepository.GetBookByID(ctx, s.DB, bookID)
 	if errorResponse != nil {
 		return errorResponse
@@ -59,8 +59,9 @@ func (s *BookServices) DeleteBookByID(ctx context.Context, bookID int) *entity.E
 
 	tx, err := s.DB.Begin()
 	if err != nil {
-		return helper.ErrorResponse(http.StatusInternalServerError, err.Error())
+		return helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
 	}
+	defer tx.Commit()
 
 	if bookID <= 0 {
 		return helper.ErrorResponse(http.StatusBadRequest, "invalid book ID")
@@ -69,18 +70,24 @@ func (s *BookServices) DeleteBookByID(ctx context.Context, bookID int) *entity.E
 	errorResponse = s.BookRepository.DeleteBookByID(ctx, tx, bookID)
 	if errorResponse != nil {
 		tx.Rollback()
-		return helper.ErrorResponse(http.StatusInternalServerError, err.Error())
+		return errorResponse
 	}
 
-	tx.Commit()
 	return nil
 }
 
 func (s *BookServices) UpdateBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse {
+	_, errorResponse := s.GetBookByID(ctx, book.ID)
+	fmt.Println(errorResponse)
+	if errorResponse != nil {
+		return errorResponse
+	}
+
 	tx, err := s.DB.Begin()
 	if err != nil {
 		return helper.ErrorResponse(http.StatusInternalServerError, err.Error())
 	}
+	defer tx.Commit()
 
 	if book.ID <= 0 {
 		return helper.ErrorResponse(http.StatusBadRequest, "invalid book ID")
@@ -90,12 +97,11 @@ func (s *BookServices) UpdateBook(ctx context.Context, book *entity.Book) *entit
 		return helper.ErrorResponse(http.StatusBadRequest, "Payload can't be null")
 	}
 
-	errorResponse := s.BookRepository.UpdateBook(ctx, tx, book)
+	errorResponse = s.BookRepository.UpdateBook(ctx, tx, book)
 	if errorResponse != nil {
 		tx.Rollback()
 		return errorResponse
 	}
 
-	tx.Commit()
 	return nil
 }

@@ -83,6 +83,11 @@ func (s *CardServices) GetCardByID(ctx context.Context, id int) (*entity.Card, *
 }
 
 func (s *CardServices) InsertCard(ctx context.Context, card *entity.Card) *entity.ErrorResponse {
+	existingCard, _ := s.GetCardByUID(ctx, card.UID)
+	if existingCard != nil {
+		return helper.ErrorResponse(http.StatusConflict, "UID already registered.")
+	}
+
 	return s.CardRepository.InsertCard(ctx, s.db, card)
 }
 

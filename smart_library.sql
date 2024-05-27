@@ -26,6 +26,36 @@
 ;
 
 --
+-- Table structure for table `accounts`
+--
+
+DROP TABLE IF EXISTS `accounts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */
+;
+/*!50503 SET character_set_client = utf8mb4 */
+;
+
+CREATE TABLE `accounts` (
+    `ID` int NOT NULL AUTO_INCREMENT,
+    `email` varchar(50) DEFAULT NULL,
+    `password` varchar(255) DEFAULT NULL,
+    `level` enum('admin', 'student') DEFAULT NULL,
+    PRIMARY KEY (`ID`)
+) ENGINE = InnoDB AUTO_INCREMENT = 21 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */
+;
+
+--
+-- Dumping data for table `accounts`
+--
+
+/*!40000 ALTER TABLE `accounts` DISABLE KEYS */
+;
+
+/*!40000 ALTER TABLE `accounts` ENABLE KEYS */
+;
+
+--
 -- Table structure for table `books`
 --
 
@@ -60,6 +90,8 @@ CREATE TABLE `books` (
 
 /*!40000 ALTER TABLE `books` DISABLE KEYS */
 ;
+/*!40000 ALTER TABLE `books` ENABLE KEYS */
+;
 
 --
 -- Table structure for table `borrows`
@@ -79,17 +111,17 @@ CREATE TABLE `borrows` (
     `borrow_date` datetime DEFAULT CURRENT_TIMESTAMP,
     `due_date` datetime DEFAULT NULL,
     `return_date` datetime DEFAULT NULL,
-    `status` ENUM(
+    `status` enum(
         'pending',
         'borrowed',
         'returned'
-    ) DEFAULT 'pending',
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT 'pending',
     PRIMARY KEY (`id`),
     KEY `fk_book` (`book_id`),
     KEY `fk_student` (`student_id`),
     CONSTRAINT `fk_book` FOREIGN KEY (`book_id`) REFERENCES `books` (`id`),
     CONSTRAINT `fk_student` FOREIGN KEY (`student_id`) REFERENCES `students` (`id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 19 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 29 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -98,6 +130,8 @@ CREATE TABLE `borrows` (
 --
 
 /*!40000 ALTER TABLE `borrows` DISABLE KEYS */
+;
+/*!40000 ALTER TABLE `borrows` ENABLE KEYS */
 ;
 
 --
@@ -115,7 +149,7 @@ CREATE TABLE `card_rfid` (
     `uid` varchar(100) DEFAULT NULL,
     `type` enum('book', 'student') DEFAULT NULL,
     PRIMARY KEY (`id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 30 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 44 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -124,6 +158,9 @@ CREATE TABLE `card_rfid` (
 --
 
 /*!40000 ALTER TABLE `card_rfid` DISABLE KEYS */
+;
+
+/*!40000 ALTER TABLE `card_rfid` ENABLE KEYS */
 ;
 
 --
@@ -141,10 +178,13 @@ CREATE TABLE `students` (
     `name` varchar(30) DEFAULT NULL,
     `npm` varchar(8) DEFAULT NULL,
     `card_id` int DEFAULT NULL,
+    `account_id` int DEFAULT NULL,
     PRIMARY KEY (`id`),
     KEY `fk_student_card_id` (`card_id`),
+    KEY `fk_student_account_id` (`account_id`),
+    CONSTRAINT `fk_student_account_id` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`ID`),
     CONSTRAINT `fk_student_card_id` FOREIGN KEY (`card_id`) REFERENCES `card_rfid` (`id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 4 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 25 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -153,6 +193,9 @@ CREATE TABLE `students` (
 --
 
 /*!40000 ALTER TABLE `students` DISABLE KEYS */
+;
+
+/*!40000 ALTER TABLE `students` ENABLE KEYS */
 ;
 
 --
@@ -176,4 +219,4 @@ CREATE TABLE `students` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */
 ;
 
--- Dump completed on 2024-05-24 21:09:40
+-- Dump completed on 2024-05-27 19:38:30

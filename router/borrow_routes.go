@@ -1,13 +1,14 @@
 package router
 
 import (
+	"fmt"
 	"github.com/dimassfeb-09/smart-library-be/controllers"
 	"github.com/gofiber/fiber/v2"
 )
 
-func RegisterBorrowRoutes(app *fiber.App, controller *controllers.BorrowController) {
-	app.Get("/borrow/student/:studentId", controller.GetTransactionsByStudentID)
-	app.Post("/borrow", controller.InsertBorrow)
-	app.Put("/borrow/:transactionId", controller.UpdateBorrow)
-	app.Get("/borrow/:transactionId", controller.GetBorrowByTransactionID)
+func RegisterBorrowRoutes(path string, app *fiber.App, controller *controllers.BorrowController) {
+	app.Get(fmt.Sprintf("/%s/student/:studentId", path), controller.GetTransactionsByStudentID)
+	app.Post(fmt.Sprintf("/%s", path), controller.InsertBorrow)
+	app.Put(fmt.Sprintf("/%s/:transactionId", path), controller.UpdateBorrow)
+	app.Get(fmt.Sprintf("/%s/:transactionId", path), controller.GetBorrowByTransactionID)
 }

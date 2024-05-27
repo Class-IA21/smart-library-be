@@ -29,12 +29,7 @@ func NewBookCardServices(DB *sql.DB, bs *BookServices, cs *CardServices) *BookCa
 }
 
 func (s *BookCardServices) UpdateBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse {
-	_, err := s.BookServices.GetBookByID(ctx, book.ID)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.CardServices.GetCardByID(ctx, book.CardID)
+	_, err := s.CardServices.GetCardByID(ctx, book.CardID)
 	if err != nil {
 		return err
 	}

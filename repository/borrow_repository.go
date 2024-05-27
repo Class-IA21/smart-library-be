@@ -77,6 +77,7 @@ func (*BorrowRepository) GetBorrowByTransactionID(ctx context.Context, db *sql.D
 	if err != nil {
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
 	}
+	defer rows.Close()
 
 	var borrow entity.Borrow
 	var bookIds []int
