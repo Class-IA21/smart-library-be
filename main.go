@@ -10,6 +10,7 @@ import (
 	"github.com/dimassfeb-09/smart-library-be/router"
 	"github.com/dimassfeb-09/smart-library-be/services"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 )
@@ -67,6 +68,7 @@ func main() {
 	controller := NewApp(database)
 	app := fiber.New()
 
+	app.Use(cors.New())
 	app.Use(logger.New())
 	app.Use(requestid.New())
 	app.Use(logger.New(logger.Config{
