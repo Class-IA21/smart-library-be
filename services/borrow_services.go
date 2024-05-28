@@ -12,8 +12,10 @@ import (
 )
 
 type BorrowServiceInterface interface {
-	GetTransactionsByStudentID(ctx context.Context, studentId int) (transactionID []string, error *entity.ErrorResponse)
+	GetBorrowsByStudentID(ctx context.Context, studentId int) (transactionID []string, error *entity.ErrorResponse)
 	GetBorrowByTransactionID(ctx context.Context, transactionID string) (*entity.Borrow, *entity.ErrorResponse)
+	GetBorrowsByBookID(ctx context.Context, bookID int) ([]*entity.Borrow, *entity.ErrorResponse)
+	GetBorrows(ctx context.Context) ([]*entity.Borrow, *entity.ErrorResponse)
 	InsertBorrow(ctx context.Context, borrow *entity.Borrow) *entity.ErrorResponse
 	UpdateBorrow(ctx context.Context, borrow *entity.BorrowUpdate) *entity.ErrorResponse
 }
@@ -29,13 +31,21 @@ func NewBorrowServices(db *sql.DB, borrowRepo *repository.BorrowRepository, stud
 	return &BorrowServices{DB: db, BorrowRepository: borrowRepo, StudentServices: studentService, BookServices: bookService}
 }
 
-func (s *BorrowServices) GetTransactionsByStudentID(ctx context.Context, studentId int) (*entity.BorrowList, *entity.ErrorResponse) {
+func (s *BorrowServices) GetBorrowsByStudentID(ctx context.Context, studentId int) (*entity.BorrowList, *entity.ErrorResponse) {
 
-	return s.BorrowRepository.GetTransactionsByStudentID(ctx, s.DB, studentId)
+	return s.BorrowRepository.GetBorrowsByStudentID(ctx, s.DB, studentId)
 }
 
 func (s *BorrowServices) GetBorrowByTransactionID(ctx context.Context, transactionID string) (*entity.Borrow, *entity.ErrorResponse) {
-	return s.BorrowRepository.GetBorrowByTransactionID(ctx, s.DB, transactionID)
+	return s.BorrowRepository.GetBorrowByID(ctx, s.DB, transactionID)
+}
+
+func (s *BorrowServices) GetBorrowByBookID(ctx context.Context, bookID int) ([]*entity.Borrow, *entity.ErrorResponse) {
+	return s.BorrowRepository.GetBorrowByBookID(ctx, s.DB, bookID)
+}
+
+func (s *BorrowServices) GetBorrows(ctx context.Context) ([]*entity.Borrow, *entity.ErrorResponse) {
+	return s.BorrowRepository.GetBorrows(ctx, s.DB)
 }
 
 func (s *BorrowServices) InsertBorrow(ctx context.Context, borrow *entity.Borrow) *entity.ErrorResponse {

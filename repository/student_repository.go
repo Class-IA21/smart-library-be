@@ -64,7 +64,7 @@ func (*StudentRepository) GetStudentByCardID(ctx context.Context, db *sql.DB, ca
 	err := row.Scan(&student.ID, &student.Name, &student.NPM, &student.CardID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, helper.ErrorResponse(http.StatusNotFound, "data not found")
+			return nil, helper.ErrorResponse(http.StatusNotFound, "data student not found")
 		}
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan student")
 	}
@@ -79,8 +79,9 @@ func (*StudentRepository) GetStudentByID(ctx context.Context, db *sql.DB, id int
 	err := row.Scan(&student.ID, &student.Name, &student.NPM, &student.CardID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, helper.ErrorResponse(http.StatusNotFound, "data not found")
+			return nil, helper.ErrorResponse(http.StatusNotFound, "data student not found")
 		}
+		fmt.Println(err)
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan student")
 	}
 
@@ -94,7 +95,7 @@ func (*StudentRepository) GetStudentByEmail(ctx context.Context, db *sql.DB, ema
 	err := row.Scan(&student.ID, &student.Name, &student.NPM, &student.CardID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, helper.ErrorResponse(http.StatusNotFound, "data not found")
+			return nil, helper.ErrorResponse(http.StatusNotFound, "data student not found")
 		}
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan student")
 	}
@@ -109,7 +110,7 @@ func (r *StudentRepository) GetStudentByNPM(ctx context.Context, db *sql.DB, npm
 	err := row.Scan(&student.ID, &student.Name, &student.NPM, &student.CardID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, helper.ErrorResponse(http.StatusNotFound, "data not found")
+			return nil, helper.ErrorResponse(http.StatusNotFound, "data student not found")
 		}
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan student")
 	}

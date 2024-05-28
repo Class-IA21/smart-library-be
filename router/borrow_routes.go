@@ -8,7 +8,9 @@ import (
 
 func RegisterBorrowRoutes(path string, app *fiber.App, controller *controllers.BorrowController) {
 	app.Get(fmt.Sprintf("/%s/student/:studentId", path), controller.GetTransactionsByStudentID)
+	app.Get(fmt.Sprintf("/%s", path), controller.GetBorrows)
+	app.Get(fmt.Sprintf("/%s/book/:bookId", path), controller.GetBorrowsByBookID)
 	app.Post(fmt.Sprintf("/%s", path), controller.InsertBorrow)
 	app.Put(fmt.Sprintf("/%s/:transactionId", path), controller.UpdateBorrow)
-	app.Get(fmt.Sprintf("/%s/:transactionId", path), controller.GetBorrowByTransactionID)
+
 }

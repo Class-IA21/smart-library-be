@@ -13,6 +13,8 @@ import (
 type BorrowControllerInterface interface {
 	GetTransactionsByStudentID(c *fiber.Ctx) error
 	GetBorrowByTransactionID(c *fiber.Ctx) error
+	GetBorrowsByBookID(c *fiber.Ctx) error
+	GetBorrows(c *fiber.Ctx) error
 	InsertBorrow(c *fiber.Ctx) error
 	UpdateBorrow(c *fiber.Ctx) error
 }
@@ -34,7 +36,33 @@ func (c *BorrowController) GetTransactionsByStudentID(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(errorResponse)
 	}
 
-	student, errorResponse := c.service.GetTransactionsByStudentID(ctx.Context(), studentId)
+	student, errorResponse := c.service.GetBorrowsByStudentID(ctx.Context(), studentId)
+	if errorResponse != nil {
+		return ctx.Status(errorResponse.Code).JSON(errorResponse)
+	}
+
+	response := helper.SuccessResponseWithData(http.StatusOK, "OK", student)
+	return ctx.JSON(response)
+}
+
+func (c *BorrowController) GetBorrowsByBookID(ctx *fiber.Ctx) error {
+	bookId, err := strconv.Atoi(ctx.Params("bookId"))
+	if err != nil || bookId <= 0 {
+		errorResponse := helper.ErrorResponse(http.StatusBadRequest, "ID Book tidak valid")
+		return ctx.Status(fiber.StatusBadRequest).JSON(errorResponse)
+	}
+
+	student, errorResponse := c.service.GetBorrowByBookID(ctx.Context(), bookId)
+	if errorResponse != nil {
+		return ctx.Status(errorResponse.Code).JSON(errorResponse)
+	}
+
+	response := helper.SuccessResponseWithData(http.StatusOK, "OK", student)
+	return ctx.JSON(response)
+}
+
+func (c *BorrowController) GetBorrows(ctx *fiber.Ctx) error {
+	student, errorResponse := c.service.GetBorrows(ctx.Context())
 	if errorResponse != nil {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
