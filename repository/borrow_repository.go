@@ -12,8 +12,10 @@ import (
 )
 
 type BorrowRepositoryInterface interface {
-	GetTransactionsByStudentID(ctx context.Context, db *sql.DB, studentID int) ([]string, *entity.ErrorResponse)
-	GetBorrowByTransactionID(ctx context.Context, db *sql.DB, transactionID string) (*entity.Borrow, *entity.ErrorResponse)
+	GetBorrowsByStudentID(ctx context.Context, db *sql.DB, studentID int) ([]string, *entity.ErrorResponse)
+	GetBorrowByID(ctx context.Context, db *sql.DB, transactionID string) (*entity.Borrow, *entity.ErrorResponse)
+	GetBorrows(ctx context.Context, db *sql.DB) ([]*entity.Borrow, *entity.ErrorResponse)
+	GetBorrowByBookID(ctx context.Context, db *sql.DB, bookID int) ([]*entity.Borrow, *entity.ErrorResponse)
 	InsertBorrow(ctx context.Context, tx *sql.Tx, borrow *entity.Borrow) *entity.ErrorResponse
 	UpdateBorrow(ctx context.Context, tx *sql.Tx, borrow *entity.BorrowUpdate) *entity.ErrorResponse
 }
@@ -24,9 +26,9 @@ func NewBorrowRepository() *BorrowRepository {
 	return &BorrowRepository{}
 }
 
-func (*BorrowRepository) GetTransactionsByStudentID(ctx context.Context, db *sql.DB, studentID int) (*entity.BorrowList, *entity.ErrorResponse) {
+func (*BorrowRepository) GetBorrowsByStudentID(ctx context.Context, db *sql.DB, studentID int) (*entity.BorrowList, *entity.ErrorResponse) {
 
-	rows, err := db.QueryContext(ctx, "SELECT transaction_id, student_id, book_id, borrow_date, due_date, return_date  FROM borrows WHERE student_id = ?", studentID)
+	rows, err := db.QueryContext(ctx, "SELECT transaction_id, student_id, book_id, borrow_date, due_date, return_date, status  FROM borrows WHERE student_id = ?", studentID)
 	if err != nil {
 		fmt.Println(err)
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
@@ -43,8 +45,10 @@ func (*BorrowRepository) GetTransactionsByStudentID(ctx context.Context, db *sql
 		var borrowDate string
 		var dueDate string
 		var returnDate sql.NullString
-		err := rows.Scan(&newTransactionID, &studentID, &bookID, &borrowDate, &dueDate, &returnDate)
+		var status string
+		err := rows.Scan(&newTransactionID, &studentID, &bookID, &borrowDate, &dueDate, &returnDate, &status)
 		if err != nil {
+			fmt.Println(err)
 			return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan borrow")
 		}
 
@@ -57,6 +61,7 @@ func (*BorrowRepository) GetTransactionsByStudentID(ctx context.Context, db *sql
 				DueDate:    dueDate,
 				ReturnDate: returnDate.String,
 				BookIDS:    []int{bookID},
+				Status:     status,
 			}
 			transactionMap[newTransactionID] = &transaction
 		}
@@ -72,7 +77,7 @@ func (*BorrowRepository) GetTransactionsByStudentID(ctx context.Context, db *sql
 	return &borrowList, nil
 }
 
-func (*BorrowRepository) GetBorrowByTransactionID(ctx context.Context, db *sql.DB, trxID string) (*entity.Borrow, *entity.ErrorResponse) {
+func (*BorrowRepository) GetBorrowByID(ctx context.Context, db *sql.DB, trxID string) (*entity.Borrow, *entity.ErrorResponse) {
 	rows, err := db.QueryContext(ctx, "SELECT book_id, student_id, transaction_id, borrow_date, due_date, return_date FROM borrows WHERE transaction_id = ?", trxID)
 	if err != nil {
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
@@ -108,6 +113,51 @@ func (*BorrowRepository) GetBorrowByTransactionID(ctx context.Context, db *sql.D
 	borrow.DueDate = dueDate
 
 	return &borrow, nil
+}
+
+func (*BorrowRepository) GetBorrowByBookID(ctx context.Context, db *sql.DB, bookID int) ([]*entity.Borrow, *entity.ErrorResponse) {
+	rows, err := db.QueryContext(ctx, "SELECT transaction_id, borrow_date, due_date, return_date, status, student_id FROM borrows WHERE book_id = ?", bookID)
+	if err != nil {
+		return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
+	defer rows.Close()
+
+	var borrows []*entity.Borrow
+	for rows.Next() {
+		var borrow entity.Borrow
+		var returnDate sql.NullString
+		err := rows.Scan(&borrow.TransactionID, &borrow.BorrowDate, &borrow.DueDate, &returnDate, &borrow.Status, &borrow.StudentID)
+		if err != nil {
+			return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+		}
+		borrow.ReturnDate = returnDate.String
+		borrows = append(borrows, &borrow)
+	}
+
+	return borrows, nil
+}
+
+func (*BorrowRepository) GetBorrows(ctx context.Context, db *sql.DB) ([]*entity.Borrow, *entity.ErrorResponse) {
+	rows, err := db.QueryContext(ctx, "SELECT transaction_id, student_id, book_id, due_date, return_date, status FROM borrows")
+	if err != nil {
+		return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
+	defer rows.Close()
+
+	var borrows []*entity.Borrow
+	for rows.Next() {
+		var borrow entity.Borrow
+		var returnDate sql.NullString
+		err := rows.Scan(&borrow.TransactionID, &borrow.StudentID, &borrow.BookID, &borrow.DueDate, &returnDate, &borrow.Status)
+		if err != nil {
+			fmt.Println(err)
+			return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+		}
+		borrow.ReturnDate = returnDate.String
+		borrows = append(borrows, &borrow)
+	}
+
+	return borrows, nil
 }
 
 func (*BorrowRepository) InsertBorrow(ctx context.Context, tx *sql.Tx, borrow *entity.Borrow) *entity.ErrorResponse {

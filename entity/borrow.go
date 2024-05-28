@@ -2,11 +2,13 @@ package entity
 
 type Borrow struct {
 	TransactionID string `json:"transaction_id"`
-	BookIDS       []int  `json:"book_ids" validate:"required"`
+	BookIDS       []int  `json:"book_ids,omitempty" validate:"required"`
+	BookID        int    `json:"book_id,omitempty"`
 	StudentID     int    `json:"student_id" validate:"required"`
 	BorrowDate    string `json:"borrow_date"`
 	DueDate       string `json:"due_date"`
 	ReturnDate    string `json:"return_date"`
+	Status        string `json:"status"`
 }
 
 type BorrowUpdate struct {
@@ -24,8 +26,9 @@ type BorrowList struct {
 
 type Transaction struct {
 	ID         string `json:"id"`
-	BookIDS    []int  `json:"book_ids" validate:"required"`
+	BookIDS    []int  `json:"book_ids"`
 	BorrowDate string `json:"borrow_date"`
 	DueDate    string `json:"due_date"`
 	ReturnDate string `json:"return_date"`
+	Status     string `json:"status"`
 }
