@@ -12,6 +12,7 @@ import (
 
 type StudentServiceInterface interface {
 	GetStudentByID(ctx context.Context, id int) (*entity.StudentResponse, *entity.ErrorResponse)
+	GetStudentByAccountID(ctx context.Context, accountID int) (*entity.StudentResponse, *entity.ErrorResponse)
 	GetStudentByNPM(ctx context.Context, npm string) (*entity.StudentResponse, *entity.ErrorResponse)
 	DeleteStudent(ctx context.Context, id int) *entity.ErrorResponse
 	GetStudents(ctx context.Context, page int, pageSize int) ([]*entity.StudentResponse, *entity.ErrorResponse)
@@ -61,9 +62,9 @@ func (s *StudentServices) GetStudentByID(ctx context.Context, id int) (*entity.S
 	return &studentResponse, nil
 }
 
-func (s *StudentServices) GetStudentByEmail(ctx context.Context, email string) (*entity.StudentResponse, *entity.ErrorResponse) {
+func (s *StudentServices) GetStudentByAccountID(ctx context.Context, id int) (*entity.StudentResponse, *entity.ErrorResponse) {
 	var studentResponse entity.StudentResponse
-	student, err := s.StudentRepository.GetStudentByEmail(ctx, s.db, email)
+	student, err := s.StudentRepository.GetStudentByAccountID(ctx, s.db, id)
 	if err != nil {
 		return nil, err
 	}

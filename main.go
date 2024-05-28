@@ -2,8 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"log"
-
+	"fmt"
 	"github.com/dimassfeb-09/smart-library-be/controllers"
 	"github.com/dimassfeb-09/smart-library-be/db"
 	"github.com/dimassfeb-09/smart-library-be/repository"
@@ -13,16 +12,20 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/joho/godotenv"
+	"log"
+	"os"
 )
 
 type App struct {
-	BookController        *controllers.BookController
-	StudentController     *controllers.StudentController
-	CardController        *controllers.CardController
-	BorrowController      *controllers.BorrowController
-	BookCardController    *controllers.BookCardController
-	StudentCardController *controllers.StudentCardController
-	AccountController     *controllers.AccountController
+	BookController         *controllers.BookController
+	StudentController      *controllers.StudentController
+	CardController         *controllers.CardController
+	BorrowController       *controllers.BorrowController
+	BookCardController     *controllers.BookCardController
+	StudentCardController  *controllers.StudentCardController
+	AccountController      *controllers.AccountController
+	NotificationController *controllers.NotificationController
 }
 
 func NewApp(database *sql.DB) *App {
@@ -52,14 +55,18 @@ func NewApp(database *sql.DB) *App {
 	accountService := services.NewAccountServices(database, accountRepository, studentService)
 	accountController := controllers.NewAccountController(accountService)
 
+	notificationService := services.NewNotificationServices(database, studentService, accountService, borrowService)
+	notificationController := controllers.NewNotificationController(notificationService)
+
 	return &App{
-		BookController:        bookController,
-		StudentController:     studentController,
-		CardController:        cardController,
-		BorrowController:      borrowController,
-		BookCardController:    bookCardController,
-		StudentCardController: studentCardController,
-		AccountController:     accountController,
+		BookController:         bookController,
+		StudentController:      studentController,
+		CardController:         cardController,
+		BorrowController:       borrowController,
+		BookCardController:     bookCardController,
+		StudentCardController:  studentCardController,
+		AccountController:      accountController,
+		NotificationController: notificationController,
 	}
 }
 
@@ -75,11 +82,20 @@ func main() {
 		Format: "PID ${pid} | [${ip}]:${port} ${status} - ${method} ${path}\n",
 	}))
 
+	app.Get("/", func(ctx *fiber.Ctx) error {
+		return ctx.SendString("Server ON!")
+	})
+
 	router.RegisterBookRoutes("books", app, controller.BookController, controller.BookCardController)
 	router.RegisterCardRoutes("cards", app, controller.CardController)
 	router.RegisterStudentRoutes("students", app, controller.StudentController, controller.StudentCardController)
 	router.RegisterBorrowRoutes("borrows", app, controller.BorrowController)
-	router.RegisterAccountRoutes("accounts", app, controller.AccountController)
+	router.RegisterAccountRoutes("accounts", app, controller.AccountController, controller.NotificationController)
 	router.RegisterAuthRoutes("auth", app, controller.AccountController)
-	log.Fatal(app.Listen(":3000"))
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("File .env not found")
+	}
+	log.Fatal(app.Listen(fmt.Sprintf(":" + os.Getenv("PORT"))))
 }

@@ -26,8 +26,9 @@ type BorrowList struct {
 
 type Transaction struct {
 	ID         string `json:"id"`
-	BookIDS    []int  `json:"book_ids" validate:"required"`
+	BookIDS    []int  `json:"book_ids"`
 	BorrowDate string `json:"borrow_date"`
 	DueDate    string `json:"due_date"`
 	ReturnDate string `json:"return_date"`
+	Status     string `json:"status"`
 }

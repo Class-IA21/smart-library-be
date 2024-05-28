@@ -16,12 +16,12 @@ type AccountChangePasswordRequest struct {
 
 type Account struct {
 	ID    int    `json:"id"`
-	Email string `json:"email"`
-	Level string `json:"level"`
+	Email string `json:"email" validate:"required"`
+	Level string `json:"level" validate:"required"`
 }
 
 type AccountResponse struct {
 	ID    int    `json:"id"`
-	Email string `json:"email"`
-	Level string `json:"level"`
+	Email string `json:"email" validate:"required"`
+	Level string `json:"level" validate:"required"`
 }

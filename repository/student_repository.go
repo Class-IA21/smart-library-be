@@ -15,6 +15,7 @@ type StudentRepositoryInterface interface {
 	GetStudents(ctx context.Context, db *sql.DB, page int, pageSize int) ([]*entity.Student, *entity.ErrorResponse)
 	GetStudentByCardID(ctx context.Context, db *sql.DB, cardId int) (*entity.Student, *entity.ErrorResponse)
 	GetStudentByID(ctx context.Context, db *sql.DB, id int) (*entity.Student, *entity.ErrorResponse)
+	GetStudentByAccountID(ctx context.Context, db *sql.DB, accountID int) (*entity.Student, *entity.ErrorResponse)
 	GetStudentByNPM(ctx context.Context, db *sql.DB, npm string) (*entity.Student, *entity.ErrorResponse)
 	InsertStudent(ctx context.Context, tx *sql.Tx, student *entity.Student) *entity.ErrorResponse
 	DeleteStudent(ctx context.Context, tx *sql.Tx, id int) *entity.ErrorResponse
@@ -46,11 +47,13 @@ func (*StudentRepository) GetStudents(ctx context.Context, db *sql.DB, page int,
 
 	for rows.Next() {
 		var student entity.Student
-		err := rows.Scan(&student.ID, &student.Name, &student.NPM, &student.CardID)
+		var cardID sql.NullInt64
+		err := rows.Scan(&student.ID, &student.Name, &student.NPM, &cardID)
 		if err != nil {
 			fmt.Println(err)
 			return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan student")
 		}
+		student.CardID = int(cardID.Int64)
 		students = append(students, &student)
 	}
 
@@ -59,24 +62,27 @@ func (*StudentRepository) GetStudents(ctx context.Context, db *sql.DB, page int,
 
 func (*StudentRepository) GetStudentByCardID(ctx context.Context, db *sql.DB, cardId int) (*entity.Student, *entity.ErrorResponse) {
 	var student entity.Student
+	var cardID sql.NullInt64
 
 	row := db.QueryRowContext(ctx, "SELECT id, name, npm, card_id FROM students WHERE card_id = ?", cardId)
-	err := row.Scan(&student.ID, &student.Name, &student.NPM, &student.CardID)
+	err := row.Scan(&student.ID, &student.Name, &student.NPM, &cardID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, helper.ErrorResponse(http.StatusNotFound, "data student not found")
 		}
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan student")
 	}
+	student.CardID = int(cardID.Int64)
 
 	return &student, nil
 }
 
 func (*StudentRepository) GetStudentByID(ctx context.Context, db *sql.DB, id int) (*entity.Student, *entity.ErrorResponse) {
 	var student entity.Student
+	var cardID sql.NullInt64
 
 	row := db.QueryRowContext(ctx, "SELECT id, name, npm, card_id FROM students WHERE id = ?", id)
-	err := row.Scan(&student.ID, &student.Name, &student.NPM, &student.CardID)
+	err := row.Scan(&student.ID, &student.Name, &student.NPM, &cardID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, helper.ErrorResponse(http.StatusNotFound, "data student not found")
@@ -84,36 +90,43 @@ func (*StudentRepository) GetStudentByID(ctx context.Context, db *sql.DB, id int
 		fmt.Println(err)
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan student")
 	}
+	student.CardID = int(cardID.Int64)
 
 	return &student, nil
 }
 
-func (*StudentRepository) GetStudentByEmail(ctx context.Context, db *sql.DB, email string) (*entity.Student, *entity.ErrorResponse) {
+func (*StudentRepository) GetStudentByAccountID(ctx context.Context, db *sql.DB, accountID int) (*entity.Student, *entity.ErrorResponse) {
 	var student entity.Student
+	var cardID sql.NullInt64
 
-	row := db.QueryRowContext(ctx, "SELECT id, name, npm, card_id FROM students WHERE email = ?", email)
-	err := row.Scan(&student.ID, &student.Name, &student.NPM, &student.CardID)
+	row := db.QueryRowContext(ctx, "SELECT id, name, npm, card_id FROM students WHERE account_id = ?", accountID)
+	err := row.Scan(&student.ID, &student.Name, &student.NPM, &cardID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, helper.ErrorResponse(http.StatusNotFound, "data student not found")
 		}
+		fmt.Println(err)
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan student")
 	}
+	student.CardID = int(cardID.Int64)
 
 	return &student, nil
 }
 
 func (r *StudentRepository) GetStudentByNPM(ctx context.Context, db *sql.DB, npm string) (*entity.Student, *entity.ErrorResponse) {
 	var student entity.Student
+	var cardID sql.NullInt64
+
 	query := "SELECT id, name, npm, card_id FROM students WHERE npm = ? LIMIT 1"
 	row := db.QueryRowContext(ctx, query, npm)
-	err := row.Scan(&student.ID, &student.Name, &student.NPM, &student.CardID)
+	err := row.Scan(&student.ID, &student.Name, &student.NPM, &cardID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, helper.ErrorResponse(http.StatusNotFound, "data student not found")
 		}
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan student")
 	}
+	student.CardID = int(cardID.Int64)
 
 	return &student, nil
 }
@@ -132,7 +145,6 @@ func (*StudentRepository) InsertStudent(ctx context.Context, tx *sql.Tx, student
 
 	_, err := tx.ExecContext(ctx, query, args...)
 	if err != nil {
-		fmt.Println(err)
 		return helper.ErrorResponse(http.StatusInternalServerError, "failed to insert student")
 	}
 
