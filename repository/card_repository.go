@@ -18,6 +18,8 @@ type CardRepositoryInterface interface {
 	InsertCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse
 	UpdateCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse
 	DeleteCard(ctx context.Context, db *sql.DB, id int) *entity.ErrorResponse
+	InsertContainerCard(ctx context.Context, tx *sql.Tx, uid string) *entity.ErrorResponse
+	GetOnceContainerCard(ctx context.Context, tx *sql.Tx) (string, *entity.ErrorResponse)
 }
 
 type CardRepository struct{}
@@ -114,4 +116,32 @@ func (r *CardRepository) DeleteCard(ctx context.Context, db *sql.DB, id int) *en
 	}
 
 	return nil
+}
+func (r *CardRepository) InsertContainerCard(ctx context.Context, tx *sql.Tx, uid string) *entity.ErrorResponse {
+	_, err := tx.ExecContext(ctx, "INSERT INTO card_container(uid) VALUES(?)", uid)
+	if err != nil {
+		return helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return nil
+}
+
+func (r *CardRepository) GetOnceContainerCard(ctx context.Context, tx *sql.Tx) (string, *entity.ErrorResponse) {
+	row := tx.QueryRowContext(ctx, "SELECT uid FROM card_container")
+
+	var uid string
+	err := row.Scan(&uid)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", helper.ErrorResponse(http.StatusNotFound, "Card UID container no data")
+		}
+		return "", helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	_, err = tx.ExecContext(ctx, "DELETE FROM card_container WHERE uid = ?", uid)
+	if err != nil {
+		return "", helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return uid, nil
 }

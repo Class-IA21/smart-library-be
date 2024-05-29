@@ -12,7 +12,7 @@ import (
 
 type BorrowRepositoryInterface interface {
 	GetBorrowsByStudentID(ctx context.Context, db *sql.DB, studentID int) ([]string, *entity.ErrorResponse)
-	GetBorrowByID(ctx context.Context, db *sql.DB, transactionID string) (*entity.Borrow, *entity.ErrorResponse)
+	GetBorrowByTransactionID(ctx context.Context, db *sql.DB, transactionID string) (*entity.Borrow, *entity.ErrorResponse)
 	GetBorrows(ctx context.Context, db *sql.DB) ([]*entity.Borrow, *entity.ErrorResponse)
 	GetBorrowByBookID(ctx context.Context, db *sql.DB, bookID int) ([]*entity.Borrow, *entity.ErrorResponse)
 	InsertBorrow(ctx context.Context, tx *sql.Tx, borrow *entity.Borrow) *entity.ErrorResponse
@@ -73,7 +73,7 @@ func (*BorrowRepository) GetBorrowsByStudentID(ctx context.Context, db *sql.DB, 
 	return &borrowList, nil
 }
 
-func (*BorrowRepository) GetBorrowByID(ctx context.Context, db *sql.DB, trxID string) (*entity.Borrow, *entity.ErrorResponse) {
+func (*BorrowRepository) GetBorrowByTransactionID(ctx context.Context, db *sql.DB, trxID string) (*entity.Borrow, *entity.ErrorResponse) {
 	rows, err := db.QueryContext(ctx, "SELECT book_id, student_id, transaction_id, borrow_date, due_date, return_date FROM borrows WHERE transaction_id = ?", trxID)
 	if err != nil {
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")

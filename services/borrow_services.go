@@ -32,12 +32,11 @@ func NewBorrowServices(db *sql.DB, borrowRepo *repository.BorrowRepository, stud
 }
 
 func (s *BorrowServices) GetBorrowsByStudentID(ctx context.Context, studentId int) (*entity.BorrowList, *entity.ErrorResponse) {
-
 	return s.BorrowRepository.GetBorrowsByStudentID(ctx, s.DB, studentId)
 }
 
 func (s *BorrowServices) GetBorrowByTransactionID(ctx context.Context, transactionID string) (*entity.Borrow, *entity.ErrorResponse) {
-	return s.BorrowRepository.GetBorrowByID(ctx, s.DB, transactionID)
+	return s.BorrowRepository.GetBorrowByTransactionID(ctx, s.DB, transactionID)
 }
 
 func (s *BorrowServices) GetBorrowByBookID(ctx context.Context, bookID int) ([]*entity.Borrow, *entity.ErrorResponse) {

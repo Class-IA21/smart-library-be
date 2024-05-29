@@ -19,6 +19,7 @@ type StudentRepositoryInterface interface {
 	GetStudentByNPM(ctx context.Context, db *sql.DB, npm string) (*entity.Student, *entity.ErrorResponse)
 	InsertStudent(ctx context.Context, tx *sql.Tx, student *entity.Student) *entity.ErrorResponse
 	DeleteStudent(ctx context.Context, tx *sql.Tx, id int) *entity.ErrorResponse
+	DeleteCardIDFromStudent(ctx context.Context, tx *sql.Tx, cardID int) *entity.ErrorResponse
 	UpdateStudent(ctx context.Context, tx *sql.Tx, id int, student *entity.Student) *entity.ErrorResponse
 }
 
@@ -157,6 +158,14 @@ func (*StudentRepository) DeleteStudent(ctx context.Context, tx *sql.Tx, id int)
 		return helper.ErrorResponse(http.StatusInternalServerError, "failed to delete student")
 	}
 
+	return nil
+}
+
+func (*StudentRepository) DeleteCardIDFromStudent(ctx context.Context, tx *sql.Tx, cardID int) *entity.ErrorResponse {
+	_, err := tx.ExecContext(ctx, "UPDATE students SET card_id = null WHERE card_id = ?", cardID)
+	if err != nil {
+		return helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
 	return nil
 }
 

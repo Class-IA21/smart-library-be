@@ -16,16 +16,17 @@ type StudentServiceInterface interface {
 	GetStudentByNPM(ctx context.Context, npm string) (*entity.StudentResponse, *entity.ErrorResponse)
 	DeleteStudent(ctx context.Context, id int) *entity.ErrorResponse
 	GetStudents(ctx context.Context, page int, pageSize int) ([]*entity.StudentResponse, *entity.ErrorResponse)
+	DeleteCardIDFromStudent(ctx context.Context, cardID int) *entity.ErrorResponse
 }
 
 type StudentServices struct {
-	db *sql.DB
+	DB *sql.DB
 	*repository.StudentRepository
 }
 
 func NewStudentServices(db *sql.DB, studentRepository *repository.StudentRepository) *StudentServices {
 	return &StudentServices{
-		db:                db,
+		DB:                db,
 		StudentRepository: studentRepository,
 	}
 }
@@ -36,7 +37,7 @@ func (s *StudentServices) GetStudentByCardID(ctx context.Context, cardID int) (*
 	}
 
 	var studentResponse entity.StudentResponse
-	student, err := s.StudentRepository.GetStudentByCardID(ctx, s.db, cardID)
+	student, err := s.StudentRepository.GetStudentByCardID(ctx, s.DB, cardID)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +51,7 @@ func (s *StudentServices) GetStudentByCardID(ctx context.Context, cardID int) (*
 
 func (s *StudentServices) GetStudentByID(ctx context.Context, id int) (*entity.StudentResponse, *entity.ErrorResponse) {
 	var studentResponse entity.StudentResponse
-	student, err := s.StudentRepository.GetStudentByID(ctx, s.db, id)
+	student, err := s.StudentRepository.GetStudentByID(ctx, s.DB, id)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +65,7 @@ func (s *StudentServices) GetStudentByID(ctx context.Context, id int) (*entity.S
 
 func (s *StudentServices) GetStudentByAccountID(ctx context.Context, id int) (*entity.StudentResponse, *entity.ErrorResponse) {
 	var studentResponse entity.StudentResponse
-	student, err := s.StudentRepository.GetStudentByAccountID(ctx, s.db, id)
+	student, err := s.StudentRepository.GetStudentByAccountID(ctx, s.DB, id)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func (s *StudentServices) GetStudentByAccountID(ctx context.Context, id int) (*e
 
 func (s *StudentServices) GetStudentByNPM(ctx context.Context, npm string) (*entity.StudentResponse, *entity.ErrorResponse) {
 	var studentResponse entity.StudentResponse
-	student, err := s.StudentRepository.GetStudentByNPM(ctx, s.db, npm)
+	student, err := s.StudentRepository.GetStudentByNPM(ctx, s.DB, npm)
 	if err != nil {
 		return nil, err
 	}
@@ -91,12 +92,12 @@ func (s *StudentServices) GetStudentByNPM(ctx context.Context, npm string) (*ent
 }
 
 func (s *StudentServices) DeleteStudent(ctx context.Context, id int) *entity.ErrorResponse {
-	_, errorResponse := s.StudentRepository.GetStudentByID(ctx, s.db, id)
+	_, errorResponse := s.StudentRepository.GetStudentByID(ctx, s.DB, id)
 	if errorResponse != nil {
 		return errorResponse
 	}
 
-	tx, err := s.db.BeginTx(ctx, nil)
+	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return helper.ErrorResponse(http.StatusInternalServerError, "transaction start failed")
 	}
@@ -114,11 +115,27 @@ func (s *StudentServices) DeleteStudent(ctx context.Context, id int) *entity.Err
 	return nil
 }
 
+func (s *StudentServices) DeleteCardIDFromStudent(ctx context.Context, cardID int) *entity.ErrorResponse {
+
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
+	defer tx.Commit()
+
+	errorResponse := s.StudentRepository.DeleteCardIDFromStudent(ctx, tx, cardID)
+	if errorResponse != nil {
+		tx.Rollback()
+	}
+
+	return nil
+}
+
 func (s *StudentServices) GetStudents(ctx context.Context, page int, pageSize int) ([]*entity.StudentResponse, *entity.ErrorResponse) {
 	offset := (page - 1) * pageSize
 
 	var studentResponse []*entity.StudentResponse
-	students, err := s.StudentRepository.GetStudents(ctx, s.db, pageSize, offset)
+	students, err := s.StudentRepository.GetStudents(ctx, s.DB, pageSize, offset)
 	if err != nil {
 		return nil, err
 	}

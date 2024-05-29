@@ -12,6 +12,7 @@ import (
 type BookCardServicesInterface interface {
 	UpdateBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse
 	InsertBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse
+	DeleteBook(ctx context.Context, bookID int) *entity.ErrorResponse
 }
 
 type BookCardServices struct {
@@ -59,5 +60,38 @@ func (s *BookCardServices) InsertBook(ctx context.Context, book *entity.Book) *e
 	}
 
 	tx.Commit()
+	return nil
+}
+
+func (s *BookCardServices) DeleteBook(ctx context.Context, bookID int) *entity.ErrorResponse {
+	book, errorResponse := s.BookServices.GetBookByID(ctx, bookID)
+	if errorResponse != nil {
+		return errorResponse
+	}
+
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return helper.ErrorResponse(http.StatusInternalServerError, err.Error())
+	}
+	defer tx.Commit()
+
+	errorResponse = s.BookServices.DeleteCardIDFromBook(ctx, book.ID)
+	if errorResponse != nil {
+		tx.Rollback()
+		return errorResponse
+	}
+
+	errorResponse = s.CardServices.DeleteCard(ctx, book.CardID)
+	if errorResponse != nil {
+		tx.Rollback()
+		return errorResponse
+	}
+
+	errorResponse = s.BookServices.DeleteBookByID(ctx, book.ID)
+	if errorResponse != nil {
+		tx.Rollback()
+		return errorResponse
+	}
+
 	return nil
 }

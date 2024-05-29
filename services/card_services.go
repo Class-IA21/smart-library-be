@@ -18,10 +18,12 @@ type CardServiceInterface interface {
 	InsertCard(ctx context.Context, card *entity.Card) *entity.ErrorResponse
 	UpdateCard(ctx context.Context, id int, card *entity.Card) *entity.ErrorResponse
 	DeleteCard(ctx context.Context, id int) *entity.ErrorResponse
+	InsertContainerCard(ctx context.Context, uid string) *entity.ErrorResponse
+	GetOnceContainerCard(ctx context.Context) (string, *entity.ErrorResponse)
 }
 
 type CardServices struct {
-	db *sql.DB
+	*sql.DB
 	*repository.CardRepository
 	*BookServices
 	*StudentServices
@@ -29,7 +31,7 @@ type CardServices struct {
 
 func NewCardServices(db *sql.DB, cardRepository *repository.CardRepository, studentService *StudentServices, bookService *BookServices) *CardServices {
 	return &CardServices{
-		db:              db,
+		DB:              db,
 		CardRepository:  cardRepository,
 		BookServices:    bookService,
 		StudentServices: studentService,
@@ -37,11 +39,11 @@ func NewCardServices(db *sql.DB, cardRepository *repository.CardRepository, stud
 }
 
 func (s *CardServices) GetCards(ctx context.Context, page, pageSize int) ([]*entity.Card, *entity.ErrorResponse) {
-	return s.CardRepository.GetCards(ctx, s.db, page, pageSize)
+	return s.CardRepository.GetCards(ctx, s.DB, page, pageSize)
 }
 
 func (s *CardServices) GetCardTypeByUID(ctx context.Context, uid string) (id int, cardType string, err *entity.ErrorResponse) {
-	result, err := s.CardRepository.GetCardByUID(ctx, s.db, uid)
+	result, err := s.CardRepository.GetCardByUID(ctx, s.DB, uid)
 	if err != nil {
 		return 0, "", err
 	}
@@ -65,7 +67,7 @@ func (s *CardServices) GetCardTypeByUID(ctx context.Context, uid string) (id int
 }
 
 func (s *CardServices) GetCardByUID(ctx context.Context, uid string) (*entity.Card, *entity.ErrorResponse) {
-	result, err := s.CardRepository.GetCardByUID(ctx, s.db, uid)
+	result, err := s.CardRepository.GetCardByUID(ctx, s.DB, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +76,7 @@ func (s *CardServices) GetCardByUID(ctx context.Context, uid string) (*entity.Ca
 }
 
 func (s *CardServices) GetCardByID(ctx context.Context, id int) (*entity.Card, *entity.ErrorResponse) {
-	result, err := s.CardRepository.GetCardByID(ctx, s.db, id)
+	result, err := s.CardRepository.GetCardByID(ctx, s.DB, id)
 	if err != nil {
 		return nil, err
 	}
@@ -88,11 +90,11 @@ func (s *CardServices) InsertCard(ctx context.Context, card *entity.Card) *entit
 		return helper.ErrorResponse(http.StatusConflict, "UID already registered.")
 	}
 
-	return s.CardRepository.InsertCard(ctx, s.db, card)
+	return s.CardRepository.InsertCard(ctx, s.DB, card)
 }
 
 func (s *CardServices) UpdateCard(ctx context.Context, id int, card *entity.Card) *entity.ErrorResponse {
-	existingCard, err := s.CardRepository.GetCardByID(ctx, s.db, id)
+	existingCard, err := s.CardRepository.GetCardByID(ctx, s.DB, id)
 	if err != nil {
 		return err
 	}
@@ -101,7 +103,7 @@ func (s *CardServices) UpdateCard(ctx context.Context, id int, card *entity.Card
 		return helper.ErrorResponse(http.StatusNotFound, "Card not found")
 	}
 
-	err = s.CardRepository.UpdateCard(ctx, s.db, card)
+	err = s.CardRepository.UpdateCard(ctx, s.DB, card)
 	if err != nil {
 		return err
 	}
@@ -110,7 +112,7 @@ func (s *CardServices) UpdateCard(ctx context.Context, id int, card *entity.Card
 }
 
 func (s *CardServices) DeleteCard(ctx context.Context, id int) *entity.ErrorResponse {
-	existingCard, err := s.CardRepository.GetCardByID(ctx, s.db, id)
+	existingCard, err := s.CardRepository.GetCardByID(ctx, s.DB, id)
 	if err != nil {
 		return err
 	}
@@ -119,10 +121,40 @@ func (s *CardServices) DeleteCard(ctx context.Context, id int) *entity.ErrorResp
 		return helper.ErrorResponse(http.StatusNotFound, "Card not found")
 	}
 
-	err = s.CardRepository.DeleteCard(ctx, s.db, id)
+	book, _ := s.BookServices.GetBookByCardID(ctx, id)
+	if book != nil {
+		s.BookServices.DeleteCardIDFromBook(ctx, id)
+	}
+
+	student, _ := s.StudentServices.GetStudentByCardID(ctx, id)
+	if student != nil {
+		s.StudentServices.DeleteCardIDFromStudent(ctx, id)
+	}
+
+	err = s.CardRepository.DeleteCard(ctx, s.DB, id)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s *CardServices) InsertContainerCard(ctx context.Context, uid string) *entity.ErrorResponse {
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
+	defer tx.Commit()
+
+	return s.CardRepository.InsertContainerCard(ctx, tx, uid)
+}
+
+func (s *CardServices) GetOnceContainerCard(ctx context.Context) (string, *entity.ErrorResponse) {
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return "", helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
+	defer tx.Commit()
+
+	return s.CardRepository.GetOnceContainerCard(ctx, tx)
 }
