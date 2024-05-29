@@ -15,6 +15,7 @@ type BookServicesInterface interface {
 	GetBookByID(ctx context.Context, bookID int) (*entity.Book, *entity.ErrorResponse)
 	GetBookByCardID(ctx context.Context, cardID int) (*entity.Book, *entity.ErrorResponse)
 	DeleteBookByID(ctx context.Context, bookID int) *entity.ErrorResponse
+	DeleteCardIDFromBook(ctx context.Context, cardID int) *entity.ErrorResponse
 	UpdateBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse
 	InsertBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse
 }
@@ -48,6 +49,22 @@ func (s *BookServices) GetBookByCardID(ctx context.Context, cardID int) (*entity
 	}
 
 	return s.BookRepository.GetBookByCardID(ctx, s.DB, cardID)
+}
+
+func (s *BookServices) DeleteCardIDFromBook(ctx context.Context, cardID int) *entity.ErrorResponse {
+
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
+	defer tx.Commit()
+
+	errorResponse := s.BookRepository.DeleteCardIDFromBook(ctx, tx, cardID)
+	if errorResponse != nil {
+		tx.Rollback()
+	}
+
+	return nil
 }
 
 func (s *BookServices) DeleteBookByID(ctx context.Context, bookID int) *entity.ErrorResponse {

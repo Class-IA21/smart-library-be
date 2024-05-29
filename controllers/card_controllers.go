@@ -17,6 +17,8 @@ type CardControllerInterface interface {
 	InsertCard(ctx *fiber.Ctx) error
 	UpdateCard(ctx *fiber.Ctx) error
 	DeleteCard(ctx *fiber.Ctx) error
+	InsertContainerCard(ctx *fiber.Ctx) error
+	GetOnceContainerCardByUID(ctx *fiber.Ctx) error
 }
 
 type CardController struct {
@@ -135,5 +137,37 @@ func (c *CardController) DeleteCard(ctx *fiber.Ctx) error {
 	}
 
 	response := helper.SuccessResponseWithoutData(http.StatusOK, "Card deleted successfully")
+	return ctx.JSON(response)
+}
+
+func (c *CardController) InsertContainerCard(ctx *fiber.Ctx) error {
+	var containerCard entity.ContainerCard
+	if err := ctx.BodyParser(&containerCard); err != nil {
+		response := helper.ErrorResponse(fiber.StatusBadRequest, "Invalid request")
+		return ctx.Status(fiber.StatusBadRequest).JSON(response)
+	}
+
+	if errorResponse := helper.ValidateStruct(&containerCard); errorResponse != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
+	}
+
+	if errorResponse := c.service.InsertContainerCard(ctx.Context(), containerCard.UID); errorResponse != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
+	}
+
+	response := helper.SuccessResponseWithoutData(http.StatusOK, "Container card inserted successfully")
+	return ctx.JSON(response)
+}
+
+func (c *CardController) GetOnceContainerCardByUID(ctx *fiber.Ctx) error {
+
+	uid, errorResponse := c.service.GetOnceContainerCard(ctx.Context())
+	if errorResponse != nil {
+		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
+	}
+
+	response := helper.SuccessResponseWithData(http.StatusOK, "Container card retrived successfully", entity.ContainerCard{
+		UID: uid,
+	})
 	return ctx.JSON(response)
 }

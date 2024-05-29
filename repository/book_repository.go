@@ -16,6 +16,7 @@ type BookRepositoryInterface interface {
 	GetAllBooks(ctx context.Context, db *sql.DB) ([]*entity.Book, *entity.ErrorResponse)
 	GetBookByCardID(ctx context.Context, db *sql.DB, cardID int) (*entity.Book, *entity.ErrorResponse)
 	DeleteBookByID(ctx context.Context, tx *sql.Tx, bookID int) *entity.ErrorResponse
+	DeleteCardIDFromBook(ctx context.Context, tx *sql.Tx, cardID int) *entity.ErrorResponse
 	UpdateBook(ctx context.Context, tx *sql.Tx, book *entity.Book) *entity.ErrorResponse
 	InsertBook(ctx context.Context, tx *sql.Tx, book *entity.Book) *entity.ErrorResponse
 }
@@ -38,6 +39,7 @@ func (*BookRepository) GetBooks(ctx context.Context, db *sql.DB, page, pageSize 
 
 	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
+		fmt.Println(err.Error())
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, err.Error())
 	}
 	defer rows.Close()
@@ -45,6 +47,7 @@ func (*BookRepository) GetBooks(ctx context.Context, db *sql.DB, page, pageSize 
 	var books []*entity.Book
 	for rows.Next() {
 		var book entity.Book
+		var cardID sql.NullInt64
 		err := rows.Scan(
 			&book.ID,
 			&book.Title,
@@ -56,11 +59,12 @@ func (*BookRepository) GetBooks(ctx context.Context, db *sql.DB, page, pageSize 
 			&book.Language,
 			&book.Genre,
 			&book.Description,
-			&book.CardID,
+			&cardID,
 		)
 		if err != nil {
 			return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan book")
 		}
+		book.CardID = int(cardID.Int64)
 		books = append(books, &book)
 	}
 	if err := rows.Err(); err != nil {
@@ -73,6 +77,7 @@ func (*BookRepository) GetBookByID(ctx context.Context, db *sql.DB, bookID int) 
 	result := db.QueryRowContext(ctx, "SELECT * FROM books WHERE id = ?", bookID)
 
 	var book entity.Book
+	var cardID sql.NullInt64
 	err := result.Scan(
 		&book.ID,
 		&book.Title,
@@ -84,7 +89,7 @@ func (*BookRepository) GetBookByID(ctx context.Context, db *sql.DB, bookID int) 
 		&book.Language,
 		&book.Genre,
 		&book.Description,
-		&book.CardID,
+		&cardID,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -93,6 +98,7 @@ func (*BookRepository) GetBookByID(ctx context.Context, db *sql.DB, bookID int) 
 		}
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan book")
 	}
+	book.CardID = int(cardID.Int64)
 	return &book, nil
 }
 
@@ -102,6 +108,14 @@ func (*BookRepository) DeleteBookByID(ctx context.Context, tx *sql.Tx, bookID in
 		return helper.ErrorResponse(http.StatusInternalServerError, "failed to delete book")
 	}
 
+	return nil
+}
+
+func (*BookRepository) DeleteCardIDFromBook(ctx context.Context, tx *sql.Tx, cardID int) *entity.ErrorResponse {
+	_, err := tx.ExecContext(ctx, "UPDATE books SET card_id = null WHERE card_id = ?", cardID)
+	if err != nil {
+		return helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+	}
 	return nil
 }
 
@@ -129,6 +143,7 @@ func (*BookRepository) GetBookByCardID(ctx context.Context, db *sql.DB, cardID i
 	result := db.QueryRowContext(ctx, "SELECT * FROM books WHERE card_id = ?", cardID)
 
 	var book entity.Book
+	var cardId sql.NullInt64
 	err := result.Scan(
 		&book.ID,
 		&book.Title,
@@ -140,7 +155,7 @@ func (*BookRepository) GetBookByCardID(ctx context.Context, db *sql.DB, cardID i
 		&book.Language,
 		&book.Genre,
 		&book.Description,
-		&book.CardID,
+		&cardId,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -152,6 +167,7 @@ func (*BookRepository) GetBookByCardID(ctx context.Context, db *sql.DB, cardID i
 
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan book")
 	}
+	book.CardID = cardID
 	return &book, nil
 }
 

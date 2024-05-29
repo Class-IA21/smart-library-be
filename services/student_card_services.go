@@ -12,6 +12,7 @@ import (
 type StudentCardServiceInterface interface {
 	InsertStudent(ctx context.Context, student *entity.Student) *entity.ErrorResponse
 	UpdateStudent(ctx context.Context, student *entity.Student) *entity.ErrorResponse
+	DeleteStudent(ctx context.Context, id int) *entity.ErrorResponse
 }
 
 type StudentCardServices struct {
@@ -76,6 +77,33 @@ func (s *StudentCardServices) UpdateStudent(ctx context.Context, student *entity
 
 	if err := tx.Commit(); err != nil {
 		return helper.ErrorResponse(http.StatusInternalServerError, "transaction commit failed")
+	}
+
+	return nil
+}
+
+func (s *StudentCardServices) DeleteStudent(ctx context.Context, id int) *entity.ErrorResponse {
+	student, errorResponse := s.StudentRepository.GetStudentByID(ctx, s.DB, id)
+	if errorResponse != nil {
+		return errorResponse
+	}
+
+	tx, err := s.DB.Begin()
+	if err != nil {
+		return helper.ErrorResponse(http.StatusInternalServerError, "transaction start failed")
+	}
+	defer tx.Commit()
+
+	errorResponse = s.StudentRepository.DeleteStudent(ctx, tx, id)
+	if errorResponse != nil {
+		tx.Rollback()
+		return errorResponse
+	}
+
+	errorResponse = s.CardServices.DeleteCard(ctx, student.CardID)
+	if errorResponse != nil {
+		tx.Rollback()
+		return errorResponse
 	}
 
 	return nil

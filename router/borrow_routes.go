@@ -14,5 +14,4 @@ func RegisterBorrowRoutes(path string, app *fiber.App, controller *controllers.B
 	app.Post(fmt.Sprintf("/%s", path), controller.InsertBorrow)
 	app.Get(fmt.Sprintf("/%s/:transactionId", path), controller.GetBorrowByTransactionID)
 	app.Put(fmt.Sprintf("/%s/:transactionId", path), controller.UpdateBorrow)
-
 }
