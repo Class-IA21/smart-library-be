@@ -44,7 +44,7 @@ func (s *BorrowServices) GetBorrowByBookID(ctx context.Context, bookID int) ([]*
 	return s.BorrowRepository.GetBorrowByBookID(ctx, s.DB, bookID)
 }
 
-func (s *BorrowServices) GetBorrows(ctx context.Context) ([]*entity.Borrow, *entity.ErrorResponse) {
+func (s *BorrowServices) GetBorrows(ctx context.Context) (*entity.BorrowList, *entity.ErrorResponse) {
 	return s.BorrowRepository.GetBorrows(ctx, s.DB)
 }
 

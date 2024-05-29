@@ -20,7 +20,6 @@ type BorrowUpdate struct {
 }
 
 type BorrowList struct {
-	StudentID    int           `json:"student_id"`
 	Transactions []Transaction `json:"transactions"`
 }
 

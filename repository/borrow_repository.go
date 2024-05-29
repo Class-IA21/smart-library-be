@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -30,7 +29,6 @@ func (*BorrowRepository) GetBorrowsByStudentID(ctx context.Context, db *sql.DB, 
 
 	rows, err := db.QueryContext(ctx, "SELECT transaction_id, student_id, book_id, borrow_date, due_date, return_date, status  FROM borrows WHERE student_id = ?", studentID)
 	if err != nil {
-		fmt.Println(err)
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
 	}
 	defer rows.Close()
@@ -48,7 +46,6 @@ func (*BorrowRepository) GetBorrowsByStudentID(ctx context.Context, db *sql.DB, 
 		var status string
 		err := rows.Scan(&newTransactionID, &studentID, &bookID, &borrowDate, &dueDate, &returnDate, &status)
 		if err != nil {
-			fmt.Println(err)
 			return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan borrow")
 		}
 
@@ -71,7 +68,6 @@ func (*BorrowRepository) GetBorrowsByStudentID(ctx context.Context, db *sql.DB, 
 		transactions = append(transactions, *value)
 	}
 
-	borrowList.StudentID = studentID
 	borrowList.Transactions = transactions
 
 	return &borrowList, nil
@@ -137,27 +133,52 @@ func (*BorrowRepository) GetBorrowByBookID(ctx context.Context, db *sql.DB, book
 	return borrows, nil
 }
 
-func (*BorrowRepository) GetBorrows(ctx context.Context, db *sql.DB) ([]*entity.Borrow, *entity.ErrorResponse) {
-	rows, err := db.QueryContext(ctx, "SELECT transaction_id, student_id, book_id, due_date, return_date, status FROM borrows")
+func (*BorrowRepository) GetBorrows(ctx context.Context, db *sql.DB) (*entity.BorrowList, *entity.ErrorResponse) {
+	rows, err := db.QueryContext(ctx, "SELECT transaction_id, student_id, book_id, borrow_date, due_date, return_date, status  FROM borrows")
 	if err != nil {
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
 	}
 	defer rows.Close()
 
-	var borrows []*entity.Borrow
+	var borrowList entity.BorrowList
+	var transactions []entity.Transaction
+	var transactionMap = make(map[string]*entity.Transaction)
+	var studentID int
+
 	for rows.Next() {
-		var borrow entity.Borrow
+		var newTransactionID string
+		var bookID int
+		var borrowDate string
+		var dueDate string
 		var returnDate sql.NullString
-		err := rows.Scan(&borrow.TransactionID, &borrow.StudentID, &borrow.BookID, &borrow.DueDate, &returnDate, &borrow.Status)
+		var status string
+		err := rows.Scan(&newTransactionID, &studentID, &bookID, &borrowDate, &dueDate, &returnDate, &status)
 		if err != nil {
-			fmt.Println(err)
-			return nil, helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
+			return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan borrow")
 		}
-		borrow.ReturnDate = returnDate.String
-		borrows = append(borrows, &borrow)
+
+		if existingTransaction, ok := transactionMap[newTransactionID]; ok {
+			existingTransaction.BookIDS = append(existingTransaction.BookIDS, bookID)
+		} else {
+			transaction := entity.Transaction{
+				ID:         newTransactionID,
+				BorrowDate: borrowDate,
+				DueDate:    dueDate,
+				ReturnDate: returnDate.String,
+				BookIDS:    []int{bookID},
+				Status:     status,
+			}
+			transactionMap[newTransactionID] = &transaction
+		}
 	}
 
-	return borrows, nil
+	for _, value := range transactionMap {
+		transactions = append(transactions, *value)
+	}
+
+	borrowList.Transactions = transactions
+
+	return &borrowList, nil
 }
 
 func (*BorrowRepository) InsertBorrow(ctx context.Context, tx *sql.Tx, borrow *entity.Borrow) *entity.ErrorResponse {
@@ -195,7 +216,6 @@ func (*BorrowRepository) UpdateBorrow(ctx context.Context, tx *sql.Tx, borrow *e
 
 	_, err := tx.ExecContext(ctx, query, params...)
 	if err != nil {
-		fmt.Println(err)
 		return helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
 	}
 

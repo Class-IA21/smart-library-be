@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"github.com/dimassfeb-09/smart-library-be/helper"
 	"github.com/dimassfeb-09/smart-library-be/services"
 	"github.com/gofiber/fiber/v2"
@@ -10,6 +11,7 @@ import (
 
 type NotificationControllerInterface interface {
 	GetNotificationByAccountID(ctx *fiber.Ctx) error
+	SendEmailNotification() error
 }
 
 type NotificationController struct {
@@ -35,4 +37,9 @@ func (nc *NotificationController) GetNotificationByAccountID(ctx *fiber.Ctx) err
 	}
 
 	return ctx.JSON(helper.SuccessResponseWithData(http.StatusOK, "OK", response))
+}
+
+func (nc *NotificationController) SendEmailNotification() error {
+	nc.NotificationServices.SendEmailNotification(context.Background())
+	return nil
 }

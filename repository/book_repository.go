@@ -120,7 +120,6 @@ func (*BookRepository) UpdateBook(ctx context.Context, tx *sql.Tx, book *entity.
 		book.ID,
 	)
 	if err != nil {
-		fmt.Println(err)
 		return helper.ErrorResponse(http.StatusInternalServerError, "failed to update book")
 	}
 	return nil
