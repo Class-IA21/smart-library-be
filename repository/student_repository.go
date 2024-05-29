@@ -50,7 +50,6 @@ func (*StudentRepository) GetStudents(ctx context.Context, db *sql.DB, page int,
 		var cardID sql.NullInt64
 		err := rows.Scan(&student.ID, &student.Name, &student.NPM, &cardID)
 		if err != nil {
-			fmt.Println(err)
 			return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan student")
 		}
 		student.CardID = int(cardID.Int64)
@@ -87,7 +86,6 @@ func (*StudentRepository) GetStudentByID(ctx context.Context, db *sql.DB, id int
 		if err == sql.ErrNoRows {
 			return nil, helper.ErrorResponse(http.StatusNotFound, "data student not found")
 		}
-		fmt.Println(err)
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan student")
 	}
 	student.CardID = int(cardID.Int64)
@@ -105,7 +103,6 @@ func (*StudentRepository) GetStudentByAccountID(ctx context.Context, db *sql.DB,
 		if err == sql.ErrNoRows {
 			return nil, helper.ErrorResponse(http.StatusNotFound, "data student not found")
 		}
-		fmt.Println(err)
 		return nil, helper.ErrorResponse(http.StatusInternalServerError, "failed to scan student")
 	}
 	student.CardID = int(cardID.Int64)

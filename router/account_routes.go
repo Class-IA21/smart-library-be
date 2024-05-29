@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/dimassfeb-09/smart-library-be/controllers"
 	"github.com/gofiber/fiber/v2"
+	"log"
 )
 
 func RegisterAccountRoutes(path string, app *fiber.App, controller *controllers.AccountController, nc *controllers.NotificationController) {
@@ -12,4 +13,9 @@ func RegisterAccountRoutes(path string, app *fiber.App, controller *controllers.
 	app.Delete(fmt.Sprintf("/%s/:accountId", path), controller.DeleteAccount)
 	app.Put(fmt.Sprintf("/%s/:accountId", path), controller.UpdateAccount)
 	app.Get(fmt.Sprintf("/%s/:accountId/notifications", path), nc.GetNotificationByAccountID)
+
+	err := nc.SendEmailNotification()
+	if err != nil {
+		log.Println(err)
+	}
 }

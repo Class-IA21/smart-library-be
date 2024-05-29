@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/dimassfeb-09/smart-library-be/entity"
@@ -78,7 +77,6 @@ func (s *BookServices) DeleteBookByID(ctx context.Context, bookID int) *entity.E
 
 func (s *BookServices) UpdateBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse {
 	_, errorResponse := s.GetBookByID(ctx, book.ID)
-	fmt.Println(errorResponse)
 	if errorResponse != nil {
 		return errorResponse
 	}

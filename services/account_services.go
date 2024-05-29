@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"github.com/dimassfeb-09/smart-library-be/helper"
 	"net/http"
 
@@ -61,8 +60,6 @@ func (s *AccountServices) RegisterAccount(ctx context.Context, r *entity.Account
 	if err != nil {
 		return helper.ErrorResponse(http.StatusInternalServerError, "Internal Server Error")
 	}
-
-	fmt.Println(hashPassword)
 
 	account := entity.AccountRequest{
 		Name:     r.Name,

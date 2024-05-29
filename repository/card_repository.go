@@ -88,7 +88,6 @@ func (r *CardRepository) GetCardByUID(ctx context.Context, db *sql.DB, uid strin
 func (r *CardRepository) InsertCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse {
 	_, err := db.ExecContext(ctx, "INSERT INTO card_rfid (uid, type) VALUES (?, ?)", rfid.UID, rfid.Type)
 	if err != nil {
-		fmt.Println(err)
 		return helper.ErrorResponse(http.StatusInternalServerError, "failed to insert card")
 	}
 
