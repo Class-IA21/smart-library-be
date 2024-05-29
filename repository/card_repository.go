@@ -18,6 +18,7 @@ type CardRepositoryInterface interface {
 	InsertCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse
 	UpdateCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse
 	DeleteCard(ctx context.Context, db *sql.DB, id int) *entity.ErrorResponse
+	PostScanCardContainer(ctx context.Context, db *sql.DB, uid string) *entity.ErrorResponse
 }
 
 type CardRepository struct{}
