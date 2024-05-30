@@ -15,7 +15,7 @@ type CardServiceInterface interface {
 	GetCardTypeByUID(ctx context.Context, uid string) (id int, cardType string, err *entity.ErrorResponse)
 	GetCardByUID(ctx context.Context, uid string) (*entity.Card, *entity.ErrorResponse)
 	GetCardByID(ctx context.Context, id int) (*entity.Card, *entity.ErrorResponse)
-	InsertCard(ctx context.Context, card *entity.Card) *entity.ErrorResponse
+	InsertCard(ctx context.Context, card *entity.Card) (int, *entity.ErrorResponse)
 	UpdateCard(ctx context.Context, id int, card *entity.Card) *entity.ErrorResponse
 	DeleteCard(ctx context.Context, id int) *entity.ErrorResponse
 	InsertContainerCard(ctx context.Context, uid string) *entity.ErrorResponse
@@ -84,10 +84,10 @@ func (s *CardServices) GetCardByID(ctx context.Context, id int) (*entity.Card, *
 	return result, nil
 }
 
-func (s *CardServices) InsertCard(ctx context.Context, card *entity.Card) *entity.ErrorResponse {
+func (s *CardServices) InsertCard(ctx context.Context, card *entity.Card) (int, *entity.ErrorResponse) {
 	existingCard, _ := s.GetCardByUID(ctx, card.UID)
 	if existingCard != nil {
-		return helper.ErrorResponse(http.StatusConflict, "UID already registered.")
+		return 0, helper.ErrorResponse(http.StatusConflict, "UID already registered.")
 	}
 
 	return s.CardRepository.InsertCard(ctx, s.DB, card)

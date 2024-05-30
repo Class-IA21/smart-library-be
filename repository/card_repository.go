@@ -15,7 +15,7 @@ type CardRepositoryInterface interface {
 	GetCards(ctx context.Context, db *sql.DB, page, pageSize int) ([]*entity.Card, *entity.ErrorResponse)
 	GetCardByID(ctx context.Context, db *sql.DB, id int) (*entity.Card, *entity.ErrorResponse)
 	GetCardByUID(ctx context.Context, db *sql.DB, uid int) (*entity.Card, *entity.ErrorResponse)
-	InsertCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse
+	InsertCard(ctx context.Context, db *sql.DB, rfid *entity.Card) (int, *entity.ErrorResponse)
 	UpdateCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse
 	DeleteCard(ctx context.Context, db *sql.DB, id int) *entity.ErrorResponse
 	InsertContainerCard(ctx context.Context, tx *sql.Tx, uid string) *entity.ErrorResponse
@@ -87,13 +87,15 @@ func (r *CardRepository) GetCardByUID(ctx context.Context, db *sql.DB, uid strin
 	return &rfid, nil
 }
 
-func (r *CardRepository) InsertCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse {
-	_, err := db.ExecContext(ctx, "INSERT INTO card_rfid (uid, type) VALUES (?, ?)", rfid.UID, rfid.Type)
+func (r *CardRepository) InsertCard(ctx context.Context, db *sql.DB, rfid *entity.Card) (int, *entity.ErrorResponse) {
+	result, err := db.ExecContext(ctx, "INSERT INTO card_rfid (uid, type) VALUES (?, ?)", rfid.UID, rfid.Type)
 	if err != nil {
-		return helper.ErrorResponse(http.StatusInternalServerError, "failed to insert card")
+		return 0, helper.ErrorResponse(http.StatusInternalServerError, "failed to insert card")
 	}
 
-	return nil
+	id, _ := result.LastInsertId()
+
+	return int(id), nil
 }
 
 func (r *CardRepository) UpdateCard(ctx context.Context, db *sql.DB, rfid *entity.Card) *entity.ErrorResponse {

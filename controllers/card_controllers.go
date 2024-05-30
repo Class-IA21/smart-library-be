@@ -88,11 +88,14 @@ func (c *CardController) InsertCard(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
 	}
 
-	if errorResponse := c.service.InsertCard(ctx.Context(), &card); errorResponse != nil {
+	id, errorResponse := c.service.InsertCard(ctx.Context(), &card)
+	if errorResponse != nil {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
-	response := helper.SuccessResponseWithoutData(http.StatusCreated, "Card created successfully")
+	response := helper.SuccessResponseWithData(http.StatusCreated, "Card created successfully", map[string]any{
+		"id": id,
+	})
 	return ctx.Status(http.StatusCreated).JSON(response)
 }
 
