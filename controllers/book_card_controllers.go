@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -36,12 +37,14 @@ func (c *BookCardController) InsertBook(ctx *fiber.Ctx) error {
 		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
 	}
 
-	errorResponse := c.BookCardServices.InsertBook(ctx.Context(), &book)
+	id, errorResponse := c.BookCardServices.InsertBook(ctx.Context(), &book)
 	if errorResponse != nil {
 		return ctx.Status(errorResponse.Code).JSON(errorResponse)
 	}
 
-	response := helper.SuccessResponseWithoutData(http.StatusOK, "Data Book successfully created.")
+	response := helper.SuccessResponseWithData(http.StatusOK, "Data Book successfully created.", map[string]any{
+		"id": id,
+	})
 	return ctx.Status(http.StatusCreated).JSON(response)
 }
 
@@ -54,6 +57,7 @@ func (c *BookCardController) UpdateBook(ctx *fiber.Ctx) error {
 
 	var Book entity.Book
 	if err := ctx.BodyParser(&Book); err != nil {
+		fmt.Println(err)
 		errorResponse := helper.ErrorResponse(http.StatusBadRequest, "Invalid payload request")
 		return ctx.Status(http.StatusBadRequest).JSON(errorResponse)
 	}

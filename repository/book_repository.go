@@ -171,9 +171,9 @@ func (*BookRepository) GetBookByCardID(ctx context.Context, db *sql.DB, cardID i
 	return &book, nil
 }
 
-func (*BookRepository) InsertBook(ctx context.Context, tx *sql.Tx, book *entity.Book) *entity.ErrorResponse {
+func (*BookRepository) InsertBook(ctx context.Context, tx *sql.Tx, book *entity.Book) (int, *entity.ErrorResponse) {
 
-	_, err := tx.ExecContext(ctx, "INSERT INTO books (title, author, publisher, published_date, isbn, pages, language, genre, description, card_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	result, err := tx.ExecContext(ctx, "INSERT INTO books (title, author, publisher, published_date, isbn, pages, language, genre, description, card_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		book.Title,
 		book.Author,
 		book.Publisher,
@@ -187,9 +187,11 @@ func (*BookRepository) InsertBook(ctx context.Context, tx *sql.Tx, book *entity.
 	)
 	if err != nil {
 		if isError := strings.Contains(err.Error(), "a foreign key constraint fails"); isError {
-			return helper.ErrorResponse(http.StatusUnprocessableEntity, "failed to insert book, data card_id not valid.")
+			return 0, helper.ErrorResponse(http.StatusUnprocessableEntity, "failed to insert book, data card_id not valid.")
 		}
-		return helper.ErrorResponse(http.StatusInternalServerError, "failed to insert book")
+		return 0, helper.ErrorResponse(http.StatusInternalServerError, "failed to insert book")
 	}
-	return nil
+	id, _ := result.LastInsertId()
+
+	return int(id), nil
 }
