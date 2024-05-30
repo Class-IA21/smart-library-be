@@ -38,29 +38,29 @@ func (s *BookCardServices) UpdateBook(ctx context.Context, book *entity.Book) *e
 	return s.BookServices.UpdateBook(ctx, book)
 }
 
-func (s *BookCardServices) InsertBook(ctx context.Context, book *entity.Book) *entity.ErrorResponse {
+func (s *BookCardServices) InsertBook(ctx context.Context, book *entity.Book) (int, *entity.ErrorResponse) {
 	if book == nil {
-		return helper.ErrorResponse(http.StatusBadRequest, "Payload can't be null")
+		return 0, helper.ErrorResponse(http.StatusBadRequest, "Payload can't be null")
 	}
 
 	_, errorResponse := s.CardServices.GetCardByID(ctx, book.CardID)
 	if errorResponse != nil {
-		return errorResponse
+		return 0, errorResponse
 	}
 
 	tx, err := s.DB.Begin()
 	if err != nil {
-		return helper.ErrorResponse(http.StatusInternalServerError, err.Error())
+		return 0, helper.ErrorResponse(http.StatusInternalServerError, err.Error())
 	}
 
-	errorResponse = s.BookRepository.InsertBook(ctx, tx, book)
+	id, errorResponse := s.BookRepository.InsertBook(ctx, tx, book)
 	if errorResponse != nil {
 		tx.Rollback()
-		return errorResponse
+		return 0, errorResponse
 	}
 
 	tx.Commit()
-	return nil
+	return id, nil
 }
 
 func (s *BookCardServices) DeleteBook(ctx context.Context, bookID int) *entity.ErrorResponse {
