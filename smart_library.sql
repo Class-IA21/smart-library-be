@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.35, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 8.3.0, for macos14.2 (arm64)
 --
 -- Host: 127.0.0.1    Database: smart_library
 -- ------------------------------------------------------
--- Server version	8.0.35-0ubuntu0.22.04.1
+-- Server version	8.0.30
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */
 ;
@@ -41,7 +41,7 @@ CREATE TABLE `accounts` (
     `password` varchar(255) DEFAULT NULL,
     `level` enum('admin', 'student') DEFAULT NULL,
     PRIMARY KEY (`ID`)
-) ENGINE = InnoDB AUTO_INCREMENT = 21 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 22 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -52,6 +52,14 @@ CREATE TABLE `accounts` (
 /*!40000 ALTER TABLE `accounts` DISABLE KEYS */
 ;
 
+INSERT INTO
+    `accounts`
+VALUES (
+        21,
+        'admin@gmail.com',
+        '$2a$10$jFJmAE8X2xHOt0j3hJ/zz.bEETiJGso6LNfq4qOu1sPyaWJ/I/SwC',
+        'admin'
+    );
 /*!40000 ALTER TABLE `accounts` ENABLE KEYS */
 ;
 
@@ -80,7 +88,7 @@ CREATE TABLE `books` (
     PRIMARY KEY (`id`),
     KEY `fk_card_id` (`card_id`),
     CONSTRAINT `fk_card_id` FOREIGN KEY (`card_id`) REFERENCES `card_rfid` (`id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 36 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 37 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -90,6 +98,22 @@ CREATE TABLE `books` (
 
 /*!40000 ALTER TABLE `books` DISABLE KEYS */
 ;
+
+INSERT INTO
+    `books`
+VALUES (
+        36,
+        'Title dbc9111e0be9f180cd51f13cdc75ca88',
+        'Author 653301a3175e7508cef2af1c7c3de954',
+        'Publisher b77bedd74d3a54fce7006103c566a0c2',
+        '2022-07-18',
+        '182368131231',
+        182,
+        'Spanish',
+        'Mystery',
+        'Description c9e169801e5095ff18ebddd757ecfc78',
+        NULL
+    );
 /*!40000 ALTER TABLE `books` ENABLE KEYS */
 ;
 
@@ -135,6 +159,31 @@ CREATE TABLE `borrows` (
 ;
 
 --
+-- Table structure for table `card_container`
+--
+
+DROP TABLE IF EXISTS `card_container`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */
+;
+/*!50503 SET character_set_client = utf8mb4 */
+;
+
+CREATE TABLE `card_container` (
+    `uid` varchar(255) DEFAULT NULL
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */
+;
+
+--
+-- Dumping data for table `card_container`
+--
+
+/*!40000 ALTER TABLE `card_container` DISABLE KEYS */
+;
+/*!40000 ALTER TABLE `card_container` ENABLE KEYS */
+;
+
+--
 -- Table structure for table `card_rfid`
 --
 
@@ -149,7 +198,7 @@ CREATE TABLE `card_rfid` (
     `uid` varchar(100) DEFAULT NULL,
     `type` enum('book', 'student') DEFAULT NULL,
     PRIMARY KEY (`id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 44 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 46 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -160,6 +209,7 @@ CREATE TABLE `card_rfid` (
 /*!40000 ALTER TABLE `card_rfid` DISABLE KEYS */
 ;
 
+INSERT INTO `card_rfid` VALUES ( 44, 'jakhdjkahsejhajwhasda', 'book' );
 /*!40000 ALTER TABLE `card_rfid` ENABLE KEYS */
 ;
 
@@ -184,7 +234,7 @@ CREATE TABLE `students` (
     KEY `fk_student_account_id` (`account_id`),
     CONSTRAINT `fk_student_account_id` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`ID`),
     CONSTRAINT `fk_student_card_id` FOREIGN KEY (`card_id`) REFERENCES `card_rfid` (`id`)
-) ENGINE = InnoDB AUTO_INCREMENT = 25 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+) ENGINE = InnoDB AUTO_INCREMENT = 26 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */
 ;
 
@@ -195,6 +245,7 @@ CREATE TABLE `students` (
 /*!40000 ALTER TABLE `students` DISABLE KEYS */
 ;
 
+INSERT INTO `students` VALUES ( 25, 'Dimas', 'Dimas', NULL, 21 );
 /*!40000 ALTER TABLE `students` ENABLE KEYS */
 ;
 
@@ -219,4 +270,4 @@ CREATE TABLE `students` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */
 ;
 
--- Dump completed on 2024-05-27 19:38:30
+-- Dump completed on 2024-05-29 22:52:42
